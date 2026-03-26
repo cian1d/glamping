@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Дополнительные услуги — Глэмпинг{% endblock %}
+
+{% block content %}
+
+<section class="services-hero">
+    <div class="services-hero-overlay">
+        <h1>Дополнительные услуги</h1>
+    </div>
+</section>
+
+<div class="booking-page-container">
+
+    <div class="divider"></div>
+
+    <div class="results-display-area">
+        <div class="houses-list-vertical">
+            {% for service in services %}
+            <div class="house-wide-card">
+                <div class="wide-card-image"
+                     style="background-image: url('{{ url_for('static', filename='img/services/' ~ service.image_filename) }}');">
+                    {% if service.price %}
+                    <div class="price-badge">{{ service.price }} ₽</div>
+                    {% endif %}
+                </div>
+
+                <div class="wide-card-content">
+                    <h2 class="wide-card-title">{{ service.name }}</h2>
+                    <p class="wide-card-description">{{ service.description }}</p>
+                    <div class="wide-card-link">Доступно при бронировании домика</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="hero" style="background-image: url('{{ url_for('static', filename='img/background.jpg') }}');">
+    <div class="hero-overlay">
+        <div class="hero-container">
+            <div class="hero-text">
+                <h1>Уютная Хижина</h1>
+                <p>Перезагрузитесь наедине с природой</p>
+            </div>
+            <div class="hero-action">
+                <a href="/booking" class="btn-hero">Забронировать отдых</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <div class="houses-grid" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+        {% for house in houses %}
+        <a href="/house/{{ house['id'] }}" class="house-card"
+           style="text-decoration: none; color: inherit; width: 300px;">
+            <div class="house-image"
+                 style="background: url('{{ url_for('static', filename='img/houses/house' ~ house['id'] ~ '/cover.jpg') }}') center/cover; height: 200px; border-radius: 15px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;\">
+                {{ house['name'] }}
+            </div>
+            <div class="house-info" style="padding: 20px; text-align: center; background: white;">
+                <h2 style="font-family: var(--font-header); margin: 10px 0;">{{ house['name'] }}</h2>
+                <p style="font-size: 0.9rem; color: #666;">{{ house['short_description'] }}</p>
+                <div class="btn"
+                     style="display: inline-block; margin-top: 15px; padding: 10px 20px; background: #8b4513; color: white; border-radius: 25px;">
+                    от {{ house['price_per_night'] }}₽
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

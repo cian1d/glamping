@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ house['name'] }} — Уютная Хижина{% endblock %}
+
+{% block content %}
+<div class="container" style="flex-direction: column; align-items: flex-start; margin-top: 30px;">
+
+    <nav style="margin-bottom: 20px;">
+        <a href="/" style="text-decoration: none; color: var(--accent-wood); font-weight: bold;">← Назад к списку</a>
+    </nav>
+
+    <header style="text-align: left; padding: 0; margin-bottom: 30px;">
+        <h1>{{ house['name'] }}</h1>
+        <p class="subtitle">{{ house['short_description'] }}</p>
+    </header>
+
+    <section class="house-detail" style="display: flex; gap: 40px; flex-wrap: wrap; width: 100%;">
+
+        <div style="flex: 2; min-width: 300px;">
+            <div class="house-gallery">
+                <div class="main-image-viewport">
+                    <div class="images-track" id="images-track">
+                        <img src="{{ url_for('static', filename='img/houses/house' ~ house['id'] ~ '/cover.jpg') }}"
+                             class="zoomable" data-index="0" alt="Обложка">
+
+                        {% for img_name in images %}
+                        <img src="{{ url_for('static', filename='img/houses/house' ~ house['id'] ~ '/' ~ img_name) }}"
+                             class="zoomable" data-index="{{ loop.index }}" alt="Фото">
+                        {% endfor %}
+                    </div>
+
+                    <button class="nav-btn prev-btn" onclick="moveSlide(-1)">❮</button>
+                    <button class="nav-btn next-btn" onclick="moveSlide(1)">❯</button>
+                </div>
+
+                <div class="thumbnails-container">
+                    <img src="{{ url_for('static', filename='img/houses/house' ~ house['id'] ~ '/cover.jpg') }}"
+                         class="thumb active" onclick="slideTo(0, this)">
+
+                    {% for img_name in images %}
+                    <img src="{{ url_for('static', filename='img/houses/house' ~ house['id'] ~ '/' ~ img_name) }}"
+                         class="thumb" onclick="slideTo({{ loop.index }}, this)">
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="description-text">
+                <h3>О домике</h3>
+                <p style="font-size: 1.1rem; line-height: 1.8; opacity: 0.9;">{{ house['description'] }}</p>
+
+                <h3 style="margin-top: 30px;">Что внутри:</h3>
+                <ul style="column-count: 2; list-style-type: '🌲 '; padding-left: 20px;">
+                    {% for feature in house['features'].split(',') %}
+                    <li style="margin-bottom: 10px;">{{ feature.strip() }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="booking-card"
+             style="flex: 1; min-width: 320px; background: white; padding: 30px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); height: fit-content; position: sticky; top: 20px;">
+            <h3 style="margin-top: 0; font-family: var(--font-header);">Забронировать</h3>
+            <p style="font-size: 1.2rem; font-weight: bold; color: var(--accent-wood); margin-bottom: 20px;">
+                {{ house['price_per_night'] }} ₽ / ночь
+            </p>
+
+            <form action="/book/{{ house['id'] }}" method="POST">
+                <div style="margin-bottom: 15px;">
+                    <label>Ваше имя</label>
+                    <input type="text" name="client_name" required
+                           style="width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #eee; border-radius: 10px; background: #fafafa;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label>Телефон</label>
+                    <div style="display: flex; align-items: center; margin-top: 5px; border: 1px solid #eee; border-radius: 10px; background: #fafafa; overflow: hidden;">
+                        <span style="padding: 12px 0 12px 12px; color: #555; font-weight: bold; background: #fafafa; pointer-events: none;">+7</span>
+                        <input type="tel" id="phone-mask" name="client_phone"
+                               placeholder="(000) 000-00-00"
+                               required
+                               minlength="15"
+                               style="flex: 1; border: none; padding: 12px 12px 12px 5px; background: transparent; outline: none;">
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label>Даты отдыха</label>
+                    <input type="text" id="calendar-input" name="booking_dates" placeholder="Выбрать даты..." readonly
+                           required
+                           style="width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #eee; border-radius: 10px; background: #fafafa; cursor: pointer;">
+                </div>
+                <div style="margin-bottom: 20px; text-align: left;">
+                    <label style="margin-bottom: 10px; display: block;">Дополнительные услуги:</label>
+                    <div class="services-selection-list" style="display: flex; flex-direction: column; gap: 10px;">
+                        {% for service in all_services %}
+                        <label class="service-checkbox-label">
+                            <input type="checkbox" name="selected_services" value="{{ service.id }}"
+                                   data-price="{{ service.price }}" class="service-checkbox">
+                            <span>{{ service.name }} ({{ service.price }} ₽)</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="total-price-container" style="margin: 20px 0; padding: 15px; border-top: 2px solid #eee;">
+                    <span style="font-size: 1.2rem; color: #666;">Итого к оплате:</span>
+                    <div id="total-price-display"
+                         style="font-size: 2.5rem; font-weight: bold; color: var(--accent-wood);">
+                        {{ house.price_per_night }} ₽
+                    </div>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; border: none; cursor: pointer; padding: 15px;">
+                    Отправить заявку
+                </button>
+            </form>
+            <p style="font-size: 0.75rem; text-align: center; margin-top: 15px; opacity: 0.5;">
+                Нажимая кнопку, вы соглашаетесь с правилами проживания в лесу 🌲
+            </p>
+        </div>
+    </section>
+</div>
+<div id="successModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="success-icon">🌲</div>
+        <h2>Заявка отправлена!</h2>
+        <p>Мы получили ваши данные и скоро перезвоним, чтобы подтвердить бронирование.</p>
+        <button href="/" onclick="closeModal()" class="btn">Отлично</button>
+    </div>
+</div>
+<div id="galleryModal" class="fullscreen-gallery">
+    <span class="close-gallery" onclick="closeFullscreen()">&times;</span>
+
+    <button class="nav-btn-fs prev-fs" onclick="changeFsImage(-1)">❮</button>
+
+    <div class="gallery-content" onclick="closeFullscreen()">
+        <img id="fs-img" src="" onclick="event.stopPropagation()">
+    </div>
+
+    <button class="nav-btn-fs next-fs" onclick="changeFsImage(1)">❯</button>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    // Глобальные переменные для галереи
+    let currentIndex = 0;
+    let fsIndex = 0;
+    let fsImages = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+            // --- 1. ИНИЦИАЛИЗАЦИЯ ДАННЫХ ДЛЯ КАЛЬКУЛЯТОРА ---
+
+        // Мы берем значение и ПРИНУДИТЕЛЬНО оставляем только цифры через регулярное выражение в JS
+        const rawPriceFromJinja = "{{ house.price_per_night }}";
+        // \D убирает вообще всё: пробелы, значки валют, невидимые символы
+        const pricePerNight = parseInt(rawPriceFromJinja.replace(/\D/g, '')) || 0;
+
+        console.log("Сырые данные из Jinja:", rawPriceFromJinja);
+        console.log("Результат очистки (pricePerNight):", pricePerNight);
+
+        const display = document.getElementById('total-price-display');
+        const calendarInput = document.getElementById('calendar-input');
+        const checkboxes = document.querySelectorAll('.service-checkbox');
+
+        // --- 2. ФУНКЦИЯ РАСЧЕТА СТОИМОСТИ ---
+        function calculateTotal(selectedDates) {
+            let nights = 0;
+
+            // Считаем ночи только если выбраны ДВЕ даты
+            if (selectedDates && selectedDates.length === 2) {
+                const start = selectedDates[0];
+                const end = selectedDates[1];
+                const diffTime = Math.abs(end - start);
+                nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+
+            let servicesTotal = 0;
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    // Берем цену услуги из атрибута data-price
+                    servicesTotal += parseInt(cb.getAttribute('data-price')) || 0;
+                }
+            });
+
+            // Расчет: если ночи выбраны, умножаем на цену дома.
+            // Если нет (только зашли на страницу) — берем цену дома за 1 ночь + услуги.
+            const multiplier = nights > 0 ? nights : 1;
+            const total = (pricePerNight * multiplier) + servicesTotal;
+
+            if (display) {
+                if (nights > 0) {
+                    display.innerHTML = `${total.toLocaleString('ru-RU')} ₽ <span style="font-size: 1rem; color: #888; font-weight: normal;">(за ${nights} ноч.)</span>`;
+                } else {
+                    display.innerText = total.toLocaleString('ru-RU') + " ₽";
+                }
+            }
+        }
+
+        // --- 3. ИНИЦИАЛИЗАЦИЯ КАЛЕНДАРЯ FLATPICKR ---
+        const fp = flatpickr("#calendar-input", {
+            mode: "range",
+            minDate: "today",
+            dateFormat: "Y-m-d",
+            locale: "ru",
+            disable: [
+                {% for b in booked_dates %}
+                { from: "{{ b.from }}", to: "{{ b.to }}" },
+                {% endfor %}
+            ],
+            onChange: function(selectedDates) {
+                calculateTotal(selectedDates);
+            }
+        });
+
+        // Слушатели для услуг
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                calculateTotal(fp.selectedDates);
+            });
+        });
+
+        // Первый запуск расчета
+        calculateTotal(fp.selectedDates);
+
+        // --- 4. ОСТАЛЬНЫЕ ФУНКЦИИ (ФОРМА, ГАЛЕРЕЯ) ---
+        const bookingForm = document.getElementById('booking-form');
+        if (bookingForm) {
+            bookingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                fetch(this.action, { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Заявка отправлена!');
+                        window.location.href = '/';
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                });
+            });
+        }
+
+        // Галерея (миниатюры)
+        const mainImages = document.querySelectorAll('.images-track img');
+        fsImages = Array.from(mainImages).map(img => img.src);
+        mainImages.forEach((img, index) => {
+            img.addEventListener('click', () => openFullscreen(index));
+        });
+        const firstThumb = document.querySelector('.thumb');
+        if (firstThumb) firstThumb.classList.add('active');
+    });
+
+    // Функции слайдера
+    function slideTo(index, element) {
+        currentIndex = index;
+        const track = document.getElementById('images-track');
+        const allThumbs = document.querySelectorAll('.thumb');
+        const offset = currentIndex * -100;
+        if (track) track.style.transform = `translateX(${offset}%)`;
+        allThumbs.forEach(t => t.classList.remove('active'));
+        const activeThumb = element || allThumbs[currentIndex];
+        if (activeThumb) activeThumb.classList.add('active');
+    }
+
+    function moveSlide(direction) {
+        const slidesCount = document.querySelectorAll('.images-track img').length;
+        let newIndex = currentIndex + direction;
+        if (newIndex >= slidesCount) newIndex = 0;
+        if (newIndex < 0) newIndex = slidesCount - 1;
+        slideTo(newIndex);
+    }
+
+    // Полноэкранный режим
+    function openFullscreen(index) {
+        fsIndex = index;
+        const modal = document.getElementById('galleryModal');
+        const fsImg = document.getElementById('fsImage');
+        if (fsImg) fsImg.src = fsImages[fsIndex];
+        if (modal) modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeFullscreen() {
+        const modal = document.getElementById('galleryModal');
+        if (modal) modal.style.display = "none";
+        document.body.style.overflow = "auto";
+    }
+
+    function changeFsImage(direction) {
+        fsIndex += direction;
+        if (fsIndex >= fsImages.length) fsIndex = 0;
+        if (fsIndex < 0) fsIndex = fsImages.length - 1;
+        const fsImg = document.getElementById('fsImage');
+        if (fsImg) fsImg.src = fsImages[fsIndex];
+    }
+
+    window.onclick = function(e) {
+        if (e.target === document.getElementById('galleryModal')) closeFullscreen();
+    };
+
+    document.addEventListener('keydown', function(e) {
+        if (document.getElementById("galleryModal")?.style.display === "flex") {
+            if (e.key === "ArrowLeft") changeFsImage(-1);
+            if (e.key === "ArrowRight") changeFsImage(1);
+            if (e.key === "Escape") closeFullscreen();
+        }
+    });
+</script>
+{% endblock %}

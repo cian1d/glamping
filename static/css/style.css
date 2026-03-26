@@ -1,0 +1,739 @@
+/* --- Глобальные настройки и Цвета --- */
+:root {
+    --bg-color: #f8f6f2; /* Очень светлый беж, "песок" */
+    --text-main: #3a4747; /* Глубокий хвойный */
+    --accent-wood: #c69c6d; /* Древесный, "ольха" */
+    --card-bg: #ffffff;
+
+    /* Пара шрифтов */
+    --font-header: 'Playfair Display', serif; /* Элегантный для заголовков */
+    --font-text: 'Lato', sans-serif; /* Чистый для текста */
+}
+
+/* --- Подключаем Google Fonts (для примера, это делается в HTML) --- */
+/* (Мы добавим это в HTML, здесь просто напоминание, откуда берутся стили) */
+
+/* --- Базовые стили --- */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-text);
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Шапка */
+.main-nav {
+    background: #2d3a3a; /* Темный хвойный цвет */
+    padding: 15px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    width: 100%;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-main);
+    font-family: var(--font-header);
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.logo-icon { font-size: 1.8rem; }
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-main);
+    margin-left: 25px;
+    font-weight: 400;
+}
+
+/* Подвал */
+.main-footer {
+    background: #2d3a3a; /* Темный хвойный цвет */
+    color: white;
+    padding: 60px 0;
+    width: 100%;
+    margin-top: 80px;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.footer-logo {
+    font-family: var(--font-header);
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+.footer-right h4 {
+    margin-top: 0;
+    color: var(--accent-wood);
+}
+
+.footer-right p { opacity: 0.7; margin: 5px 0; }
+
+/* Делаем текст в шапке белым, как в подвале */
+.main-nav .logo,
+.main-nav .logo span,
+.main-nav .logo-icon,
+.main-nav .nav-links a {
+    color: white !important;
+    text-decoration: none;
+}
+
+/* Добавим легкий эффект при наведении, чтобы было понятно, что это ссылки */
+.main-nav .nav-links a:hover {
+    opacity: 0.8;
+}
+
+/* Убедимся, что иконка-елочка тоже белая (если она текстовая) */
+.logo-icon {
+    color: white;
+}
+
+/* Контейнер формы поиска */
+.search-form {
+    margin: 40px 0;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* Стильное поле ввода Flatpickr */
+.calendar-input {
+    font-family: var(--font-text);
+    padding: 15px 25px;
+    border: 2px solid #e0e0e0;
+    border-radius: 50px; /* Овальная форма */
+    width: 320px;
+    font-size: 1rem;
+    color: var(--text-main);
+    background-color: white;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23c69c6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+    background-repeat: no-repeat;
+    background-position: right 20px center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.calendar-input:focus {
+    outline: none;
+    border-color: var(--accent-wood); /* Цвет ольхи из твоих переменных */
+    box-shadow: 0 6px 20px rgba(198, 156, 109, 0.2);
+}
+
+/* Кнопка "Подобрать домик" */
+.btn-search {
+    font-family: var(--font-text);
+    padding: 15px 35px;
+    background-color: var(--accent-wood);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(198, 156, 109, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-search:hover {
+    background-color: #b58b5d; /* Чуть темнее при наведении */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(198, 156, 109, 0.4);
+}
+
+.search-header {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.no-results, .search-placeholder {
+    width: 100%;
+    padding: 60px 20px;
+}
+
+/* Главный контейнер страницы бронирования */
+.booking-page-container {
+    width: 100%;
+    max-width: 100vw; /* Строго ширина экрана */
+    display: block;   /* Убираем flex, если он мешает центрированию текста */
+    text-align: center;
+    padding-top: 60px;
+}
+
+/* Секция с заголовками */
+.search-section-fixed {
+    width: 100%;
+    margin: 0 auto;
+}
+
+.booking-title {
+    font-family: var(--font-header);
+    font-size: 2.8rem;
+    margin: 0 0 10px 0;
+    width: 100%; /* Растягиваем на всю ширину для точного центра */
+}
+
+.booking-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+/* Форма поиска */
+.search-form-fixed {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 40px;
+}
+
+/* Разделитель, который всегда одной ширины */
+.divider {
+    width: 100%;
+    max-width: 1200px;
+    height: 1px;
+    background: #eee;
+    margin: 0 auto 50px auto;
+}
+
+/* Сетка домиков */
+.results-display-area {
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 400px;
+}
+
+.status-msg {
+    width: 100%;
+    padding: 50px 0;
+}
+
+/* Контейнер для вертикального списка */
+.houses-list-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 40px; /* Расстояние между карточками */
+    margin-bottom: 100px;
+}
+
+/* Сама горизонтальная карточка */
+.house-wide-card {
+    display: flex;
+    background: white;
+    border-radius: 25px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    min-height: 350px;
+    min-width: 1000px;
+}
+
+.house-wide-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+}
+
+/* Левая часть: Картинка */
+.wide-card-image {
+    flex: 1; /* Занимает половину ширины */
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    min-width: 400px;
+}
+
+.price-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: bold;
+    color: var(--text-main);
+    font-size: 0.9rem;
+}
+
+/* Правая часть: Контент */
+.wide-card-content {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.wide-card-title {
+    font-family: var(--font-header);
+    font-size: 2.2rem;
+    margin: 0 0 15px 0;
+    color: var(--text-main);
+}
+
+.wide-card-features {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: var(--accent-wood);
+    font-weight: bold;
+}
+
+.wide-card-description {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.wide-card-link {
+    font-weight: bold;
+    color: var(--accent-wood);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+}
+
+/* Адаптивность для мобилок: превращаем обратно в вертикальные */
+@media (max-width: 900px) {
+    .house-wide-card {
+        flex-direction: column;
+    }
+    .wide-card-image {
+        height: 250px;
+        min-width: 100%;
+    }
+}
+
+/* --- Хедер --- */
+header {
+    text-align: center;
+    padding: 100px 20px 60px 20px; /* Больше отступ сверху для "воздуха" */
+}
+
+h1 {
+    font-family: var(--font-header);
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin: 0 0 15px 0;
+    letter-spacing: 1px;
+    color: var(--text-main);
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    font-style: italic;
+    opacity: 0.7;
+    margin-top: 0;
+    font-weight: 300;
+}
+
+.container {
+    display: flex;
+    flex-direction: row; /* Строго в ряд */
+    justify-content: center; /* Центрируем группу карточек */
+    align-items: stretch; /* Чтобы все карточки были одной высоты */
+    gap: 20px; /* Расстояние между ними */
+
+    max-width: 1200px;
+    width: 95%;
+    margin: 40px auto;
+
+    /* Это свойство запрещает перенос, если карточки не влезают,
+       они начнут немного сжиматься */
+    flex-wrap: nowrap;
+}
+
+.house-card {
+    /* Рассчитываем ширину: (100% - отступы) / 3 */
+    flex: 0 1 calc(33.333% - 20px);
+    min-width: 280px; /* Минимальный порог, чтобы не превратились в полоски */
+
+    background: var(--card-bg);
+    border-radius: 20px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 15px 35px rgba(58, 71, 71, 0.08);
+    transition: all 0.4s ease;
+}
+
+/* Анимация при наведении */
+.house-card:hover {
+    transform: translateY(-15px);
+    box-shadow: 0 25px 50px rgba(58, 71, 71, 0.15);
+}
+
+/* --- Изображение в карточке --- */
+.house-image {
+    width: 100%;
+    height: 240px;
+    /* CSS-градиент "Лесной туман" как заглушка */
+    background: linear-gradient(135deg, #a3b18a 0%, #588157 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* --- Инфо-блок в карточке --- */
+.house-info {
+    padding: 30px;
+    text-align: center;
+}
+
+.house-info h2 {
+    font-family: var(--font-header);
+    font-size: 1.8rem;
+    margin: 0 0 10px 0;
+    color: var(--text-main);
+}
+
+.house-info p {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin: 0 0 20px 0;
+    font-weight: 300;
+}
+
+/* --- Кнопка (визуальная) --- */
+.btn {
+    display: inline-block;
+    background-color: var(--accent-wood);
+    color: white;
+    padding: 12px 30px;
+    border-radius: 30px; /* Кнопка-"таблетка" */
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    transition: background-color 0.3s ease;
+    border: 2px solid var(--accent-wood);
+}
+
+.house-card:hover .btn {
+    background-color: transparent;
+    color: var(--accent-wood);
+}
+
+/* Цвет для занятых половин дня */
+.booked-morning {
+    background: linear-gradient(to border-top-left, #ffcccc 50%, transparent 50%) !important;
+}
+
+.booked-evening {
+    background: linear-gradient(to border-bottom-right, #ffcccc 50%, transparent 50%) !important;
+}
+
+/* Если день полностью занят внутри диапазона */
+.flatpickr-day.disabled-range {
+    background: #f2f2f2 !important;
+    color: #ccc !important;
+    cursor: not-allowed;
+}
+
+/* Стили для модального окна */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 40px;
+    border-radius: 30px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+}
+
+.success-icon {
+    font-size: 50px;
+    margin-bottom: 20px;
+}
+
+.modal-content h2 {
+    font-family: 'Playfair Display', serif;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.modal-content p {
+    color: #7f8c8d;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+/* ГАЛЕРЕЯ */
+.house-gallery {
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.main-image-container {
+    width: 100%;
+    height: 450px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.main-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.3s ease;
+}
+
+.thumbnails-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    overflow-x: auto;
+    padding: 5px;
+}
+
+.thumb {
+    width: 100px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.thumb:hover { opacity: 1; }
+.thumb.active { opacity: 1; border-color: var(--accent-wood); }
+
+/* Контейнер-рамка */
+.main-image-viewport {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    border-radius: 25px;
+    overflow: hidden; /* Скрывает картинки за пределами рамки */
+}
+
+/* Лента, которая едет вбок */
+.images-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.images-track img {
+    min-width: 100%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+/* Кнопки управления */
+.nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+
+.nav-btn:hover { background: white; transform: translateY(-50%) scale(1.1); }
+.prev-btn { left: 15px; }
+.next-btn { right: 15px; }
+
+/* Миниатюры */
+.thumbnails-container { display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; }
+.thumb { width: 100px; height: 70px; object-fit: cover; border-radius: 10px; cursor: pointer; opacity: 0.6; border: 2px solid transparent; }
+.thumb.active { opacity: 1; border-color: var(--accent-wood); }
+
+/* --- Полноэкранная Галерея (Lightbox) --- */
+.fullscreen-gallery {
+    display: none; /* Скрыта по умолчанию */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.95);
+    z-index: 5000;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+}
+
+.gallery-content {
+    position: relative;
+    width: 90%;
+    height: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.gallery-content img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    transition: opacity 0.2s ease;
+}
+
+/* Кнопки навигации в модалке */
+.nav-btn-fs {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 5001;
+}
+
+.nav-btn-fs:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.prev-fs { left: 20px; }
+.next-fs { right: 20px; }
+
+.close-gallery {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 50px;
+    font-weight: 300;
+    cursor: pointer;
+    z-index: 5002;
+    line-height: 1;
+}
+
+.close-gallery:hover { color: var(--accent-wood); }
+
+/* --- Hero-section для страницы услуг --- */
+/* Убираем лишний отступ у header, если он используется на этой странице */
+.services-hero {
+    width: 100vw; /* На всю ширину окна */
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+
+    height: 50vh; /* Умеренная высота */
+    background: #2d3a3a url('../img/background-serv.jpg') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -20px; /* Компенсация, если у nav есть отступ снизу */
+}
+
+.services-hero-overlay {
+    background: rgba(0, 0, 0, 0.4);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.services-hero h1 {
+    color: white !important;
+    font-family: var(--font-header);
+    font-size: 3.5rem;
+    margin: 0;
+    padding: 0; /* Обнуляем тот самый padding в 100px из общего стиля header */
+}
+
+/* Убираем верхний отступ у контейнера на странице услуг */
+.booking-page-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+
+label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--text-main);
+    opacity: 0.8;
+}
+
+ul {
+    padding-left: 20px;
+    opacity: 0.9;
+}
+
+ul li {
+    margin-bottom: 10px;
+}

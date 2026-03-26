@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 style="text-align: center; font-family: var(--font-header); font-size: 3rem; margin-bottom: 50px;">Наши Домики</h1>
+<div class="container" style="margin-top: 50px;">
+
+    <div class="houses-list-vertical">
+        {% for house in houses %}
+        <a href="/house/{{ house['id'] }}" class="house-wide-card">
+            <div class="wide-card-image" style="background-image: url('{{ house['image_url'] }}');">
+                <div class="price-badge">от {{ house['price_per_night'] }}₽ / ночь</div>
+            </div>
+
+            <div class="wide-card-content">
+                <h2 class="wide-card-title">{{ house['name'] }}</h2>
+                <div class="wide-card-features">
+                    <span>🌲 Лесной вид</span>
+                    <span>🔥 Камин</span>
+                    <span>📶 Wi-Fi</span>
+                </div>
+                <p class="wide-card-description">{{ house['short_description'] }}</p>
+                <span class="wide-card-link">Узнать подробнее →</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
