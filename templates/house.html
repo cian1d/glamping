@@ -99,7 +99,6 @@
                         {% endfor %}
                     </div>
                 </div>
-
                 <div class="total-price-container" style="margin: 20px 0; padding: 15px; border-top: 2px solid #eee;">
                     <span style="font-size: 1.2rem; color: #666;">Итого к оплате:</span>
                     <div id="total-price-display"
@@ -139,169 +138,312 @@
 {% endblock %}
 {% block scripts %}
 <script>
-    // Глобальные переменные для галереи
-    let currentIndex = 0;
-    let fsIndex = 0;
-    let fsImages = [];
-
     document.addEventListener('DOMContentLoaded', function() {
-            // --- 1. ИНИЦИАЛИЗАЦИЯ ДАННЫХ ДЛЯ КАЛЬКУЛЯТОРА ---
+        // 1. Данные из Flask
+        const rawDates = {{ booked_dates|safe }};
 
-        // Мы берем значение и ПРИНУДИТЕЛЬНО оставляем только цифры через регулярное выражение в JS
-        const rawPriceFromJinja = "{{ house.price_per_night }}";
-        // \D убирает вообще всё: пробелы, значки валют, невидимые символы
-        const pricePerNight = parseInt(rawPriceFromJinja.replace(/\D/g, '')) || 0;
+        // 2. Превращаем в объекты дат
+        const bookings = rawDates.map(b => ({
+            start: new Date(b.from + "T00:00:00"),
+            end: new Date(b.to + "T00:00:00")
+        }));
 
-        console.log("Сырые данные из Jinja:", rawPriceFromJinja);
-        console.log("Результат очистки (pricePerNight):", pricePerNight);
-
-        const display = document.getElementById('total-price-display');
-        const calendarInput = document.getElementById('calendar-input');
-        const checkboxes = document.querySelectorAll('.service-checkbox');
-
-        // --- 2. ФУНКЦИЯ РАСЧЕТА СТОИМОСТИ ---
-        function calculateTotal(selectedDates) {
-            let nights = 0;
-
-            // Считаем ночи только если выбраны ДВЕ даты
-            if (selectedDates && selectedDates.length === 2) {
-                const start = selectedDates[0];
-                const end = selectedDates[1];
-                const diffTime = Math.abs(end - start);
-                nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            }
-
-            let servicesTotal = 0;
-            checkboxes.forEach(cb => {
-                if (cb.checked) {
-                    // Берем цену услуги из атрибута data-price
-                    servicesTotal += parseInt(cb.getAttribute('data-price')) || 0;
+        // 3. Один единственный вызов Flatpickr
+        flatpickr("#calendar-input", {
+            locale: {
+                firstDayOfWeek: 1,
+                rangeSeparator: " — ",
+                weekdays: {
+                    shorthand: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
+                    longhand: ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
+                },
+                months: {
+                    shorthand: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
+                    longhand: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
                 }
-            });
-
-            // Расчет: если ночи выбраны, умножаем на цену дома.
-            // Если нет (только зашли на страницу) — берем цену дома за 1 ночь + услуги.
-            const multiplier = nights > 0 ? nights : 1;
-            const total = (pricePerNight * multiplier) + servicesTotal;
-
-            if (display) {
-                if (nights > 0) {
-                    display.innerHTML = `${total.toLocaleString('ru-RU')} ₽ <span style="font-size: 1rem; color: #888; font-weight: normal;">(за ${nights} ноч.)</span>`;
-                } else {
-                    display.innerText = total.toLocaleString('ru-RU') + " ₽";
-                }
-            }
-        }
-
-        // --- 3. ИНИЦИАЛИЗАЦИЯ КАЛЕНДАРЯ FLATPICKR ---
-        const fp = flatpickr("#calendar-input", {
+            },
+            dateFormat: "d.m.Y",
             mode: "range",
             minDate: "today",
-            dateFormat: "Y-m-d",
-            locale: "ru",
-            disable: [
-                {% for b in booked_dates %}
-                { from: "{{ b.from }}", to: "{{ b.to }}" },
-                {% endfor %}
-            ],
-            onChange: function(selectedDates) {
+            showMonths: 2,
+
+            onChange: function(selectedDates, dateStr, instance) {
+                // Как только пользователь кликнул по датам — пересчитываем
                 calculateTotal(selectedDates);
-            }
-        });
+            },
 
-        // Слушатели для услуг
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', () => {
-                calculateTotal(fp.selectedDates);
-            });
-        });
+            onChange: function(selectedDates, dateStr, instance) {
+                // Проверка запускается только когда выбраны ДВЕ даты (начало и конец)
+                if (selectedDates.length === 2) {
+                    const start = selectedDates[0];
+                    const end = selectedDates[1];
 
-        // Первый запуск расчета
-        calculateTotal(fp.selectedDates);
+                    // Проверяем каждую существующую бронь из базы
+                    const isOverlap = bookings.some(b => {
+                        // Условие пересечения:
+                        // Новая бронь начинается раньше, чем старая заканчивается
+                        // И новая бронь заканчивается позже, чем старая начинается
+                        return start < b.end && end > b.start;
+                    });
 
-        // --- 4. ОСТАЛЬНЫЕ ФУНКЦИИ (ФОРМА, ГАЛЕРЕЯ) ---
-        const bookingForm = document.getElementById('booking-form');
-        if (bookingForm) {
-            bookingForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = new FormData(this);
-                fetch(this.action, { method: 'POST', body: formData })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        alert('Заявка отправлена!');
-                        window.location.href = '/';
-                    } else {
-                        alert('Ошибка: ' + data.message);
+                    if (isOverlap) {
+                        alert("К сожалению, внутри выбранного периода есть уже забронированные дни. Пожалуйста, выберите другие даты.");
+                        instance.clear(); // Сбрасываем выбор
                     }
-                });
+                }
+            },
+
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+            const date = dayElem.dateObj;
+            date.setHours(0,0,0,0);
+
+            bookings.forEach(booking => {
+                const checkIn = new Date(booking.start).setHours(0,0,0,0);
+                const checkOut = new Date(booking.end).setHours(0,0,0,0);
+
+                if (date.getTime() === checkIn) {
+                    // Если в этот день кто-то заезжает
+                    dayElem.classList.add("booked-evening");
+                }
+                else if (date.getTime() === checkOut) {
+                    // Если в этот день кто-то выезжает
+                    dayElem.classList.add("booked-morning");
+                }
+                else if (date > checkIn && date < checkOut) {
+                    // Если день полностью внутри периода брони
+                    dayElem.classList.add("disabled-range");
+                }
             });
         }
-
-        // Галерея (миниатюры)
-        const mainImages = document.querySelectorAll('.images-track img');
-        fsImages = Array.from(mainImages).map(img => img.src);
-        mainImages.forEach((img, index) => {
-            img.addEventListener('click', () => openFullscreen(index));
         });
-        const firstThumb = document.querySelector('.thumb');
-        if (firstThumb) firstThumb.classList.add('active');
+    });
+    function closeModal() {
+        const modal = document.getElementById('successModal');
+        modal.classList.remove('show'); // Убираем класс анимации
+
+        // Ждем 500мс (время анимации закрытия), прежде чем перейти на главную
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 500);
+    }
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const phoneInput = document.getElementById('phone-mask');
+    if (phoneInput.value.replace(/\D/g, "").length < 10) {
+        alert("Пожалуйста, введите номер телефона полностью.");
+        phoneInput.focus();
+        return;
+    }
+
+    // Создаем объект FormData из текущей формы
+    const formData = new FormData(this);
+
+    // СОБИРАЕМ ВЫБРАННЫЕ УСЛУГИ
+    const selectedCheckboxes = document.querySelectorAll('input[name="selected_services"]:checked');
+        let houseName = "{{ house['name'] }}"; // Название текущего дома из шаблона
+
+        let servicesText = "";
+        selectedCheckboxes.forEach(cb => {
+            servicesText += " + " + cb.value;
+        });
+
+        // Перезаписываем или добавляем новое поле с полным названием (Дом + Услуги)
+        const finalOrderName = houseName + servicesText;
+        formData.append('full_order_details', finalOrderName);
+
+        // Отправляем данные
+        fetch(this.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                const modal = document.getElementById('successModal');
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    modal.classList.add('show');
+                }, 10);
+            } else {
+                alert('Ошибка при бронировании. Проверьте данные.');
+            }
+        });
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        const phoneInput = document.getElementById('phone-mask');
+        const maskOptions = {
+            mask: '(000) 000-00-00'
+        };
+        const mask = IMask(phoneInput, maskOptions);
     });
 
-    // Функции слайдера
+    let currentIndex = 0; // Храним текущий номер фото
+
+    // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ (чтобы не пересекались с currentIndex) ---
+    let fsCurrentIndex = 0;
+    let fsImagesArray = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Твой существующий код (Flatpickr, IMask и т.д.)
+        const rawDates = {{ booked_dates|safe }};
+        // ... (весь твой код календаря) ...
+
+        // 2. ДОБАВЛЯЕМ СЮДА: Инициализация полноэкранной галереи
+        const zoomableImages = document.querySelectorAll('.zoomable');
+        zoomableImages.forEach((img, idx) => {
+            fsImagesArray.push(img.src); // Наполняем массив ссылками
+
+            img.style.cursor = 'zoom-in';
+            img.onclick = function() {
+                fsCurrentIndex = idx; // Устанавливаем индекс именно этой картинки
+                openFullscreenGallery();
+            };
+        });
+    });
+
+    // --- НОВЫЕ ФУНКЦИИ (вне DOMContentLoaded) ---
+    function openFullscreenGallery() {
+        const fsModal = document.getElementById("galleryModal");
+        fsModal.style.display = "flex";
+        updateFullscreenImage();
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeFullscreen() {
+        document.getElementById("galleryModal").style.display = "none";
+        document.body.style.overflow = "auto";
+    }
+
+    function updateFullscreenImage() {
+        const fsDisplayImg = document.getElementById("fs-img");
+        fsDisplayImg.style.opacity = '0';
+        setTimeout(() => {
+            fsDisplayImg.src = fsImagesArray[fsCurrentIndex];
+            fsDisplayImg.style.opacity = '1';
+        }, 150);
+    }
+
+    function changeFsImage(step) {
+        fsCurrentIndex += step;
+        if (fsCurrentIndex >= fsImagesArray.length) fsCurrentIndex = 0;
+        if (fsCurrentIndex < 0) fsCurrentIndex = fsImagesArray.length - 1;
+        updateFullscreenImage();
+    }
+
+    // Слушатель клавиш тоже можно оставить отдельным, это стандартная практика
+    document.addEventListener('keydown', function(e) {
+        const fsModal = document.getElementById("galleryModal");
+        if (fsModal && fsModal.style.display === "flex") {
+            if (e.key === "ArrowLeft") changeFsImage(-1);
+            if (e.key === "ArrowRight") changeFsImage(1);
+            if (e.key === "Escape") closeFullscreen();
+        }
+    });
+
     function slideTo(index, element) {
-        currentIndex = index;
+        currentIndex = index; // Обновляем глобальный счетчик
+
         const track = document.getElementById('images-track');
         const allThumbs = document.querySelectorAll('.thumb');
+
+        // Сдвигаем ленту (0 = 0%, 1 = -100%, 2 = -200% и т.д.)
         const offset = currentIndex * -100;
-        if (track) track.style.transform = `translateX(${offset}%)`;
+        track.style.transform = `translateX(${offset}%)`;
+
+        // Обновляем подсветку миниатюр
         allThumbs.forEach(t => t.classList.remove('active'));
+
+        // Если кликнули на миниатюру — подсвечиваем её, если на стрелку — ищем по индексу
         const activeThumb = element || allThumbs[currentIndex];
         if (activeThumb) activeThumb.classList.add('active');
     }
 
     function moveSlide(direction) {
         const slidesCount = document.querySelectorAll('.images-track img').length;
+
+        // Считаем новый индекс
         let newIndex = currentIndex + direction;
-        if (newIndex >= slidesCount) newIndex = 0;
-        if (newIndex < 0) newIndex = slidesCount - 1;
+
+        // Зацикливание (после последней — первая)
+        if (newIndex >= slidesCount) {
+            newIndex = 0;
+        } else if (newIndex < 0) {
+            newIndex = slidesCount - 1;
+        }
+
         slideTo(newIndex);
     }
 
-    // Полноэкранный режим
-    function openFullscreen(index) {
-        fsIndex = index;
-        const modal = document.getElementById('galleryModal');
-        const fsImg = document.getElementById('fsImage');
-        if (fsImg) fsImg.src = fsImages[fsIndex];
-        if (modal) modal.style.display = "flex";
-        document.body.style.overflow = "hidden";
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Получаем базовую цену дома из Flask
+        const pricePerNight = parseInt("{{ house.price_per_night }}".replace(/\s/g, '')) || 0;
 
-    function closeFullscreen() {
-        const modal = document.getElementById('galleryModal');
-        if (modal) modal.style.display = "none";
-        document.body.style.overflow = "auto";
-    }
+        const display = document.getElementById('total-price-display');
+        const checkboxes = document.querySelectorAll('.service-checkbox');
 
-    function changeFsImage(direction) {
-        fsIndex += direction;
-        if (fsIndex >= fsImages.length) fsIndex = 0;
-        if (fsIndex < 0) fsIndex = fsImages.length - 1;
-        const fsImg = document.getElementById('fsImage');
-        if (fsImg) fsImg.src = fsImages[fsIndex];
-    }
+        // Ссылка на существующий календарь (он у тебя инициализируется выше в коде)
+        // Нам нужно дождаться его инициализации или перехватить инстанс
+        const calendarInput = document.getElementById('calendar-input');
 
-    window.onclick = function(e) {
-        if (e.target === document.getElementById('galleryModal')) closeFullscreen();
-    };
+        function calculateTotal() {
+            let nights = 0;
 
-    document.addEventListener('keydown', function(e) {
-        if (document.getElementById("galleryModal")?.style.display === "flex") {
-            if (e.key === "ArrowLeft") changeFsImage(-1);
-            if (e.key === "ArrowRight") changeFsImage(1);
-            if (e.key === "Escape") closeFullscreen();
+            // Достаем инстанс flatpickr из элемента
+            const fp = calendarInput._flatpickr;
+
+            if (fp && fp.selectedDates.length === 2) {
+                const start = fp.selectedDates[0];
+                const end = fp.selectedDates[1];
+                const diffTime = Math.abs(end - start);
+                nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            } else {
+                // Если даты не выбраны, считаем как за 0 ночей или за 1 (как тебе удобнее)
+                // Но логичнее 0, чтобы цена была только за доп. услуги, пока даты не ясны
+                nights = 0;
+            }
+
+            // Считаем выбранные услуги
+            let servicesTotal = 0;
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    servicesTotal += parseInt(cb.getAttribute('data-price')) || 0;
+                }
+            });
+
+            // Итоговая формула: (Ночи * Цена дома) + Услуги
+            // Если ночи не выбраны, показываем 0 или начальную цену?
+            // Сделаем так: если ночи > 0, считаем всё. Если 0, то только услуги + база за 1 ночь (как превью)
+            const effectiveNights = nights > 0 ? nights : 1;
+            const total = (effectiveNights * pricePerNight) + servicesTotal;
+
+            display.innerText = total.toLocaleString('ru-RU') + " ₽";
+
+            // Если даты выбраны, можно добавить приписку "за X ночей"
+            if (nights > 0) {
+                display.innerHTML = `${total.toLocaleString('ru-RU')} ₽ <span style="font-size: 1rem; color: #888;">(за ${nights} ноч.)</span>`;
+            }
         }
+
+        // Привязываемся к календарю через onChange во Flatpickr
+        // Найди в своем коде место, где инициализируется flatpickr, и добавь туда:
+        /*
+        onChange: function(selectedDates, dateStr, instance) {
+            calculateTotal();
+        }
+        */
+
+        // Либо, если не хочешь искать, добавим слушатель на ввод:
+        calendarInput.addEventListener('change', calculateTotal);
+
+        // Слушаем клики на чекбоксы
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', calculateTotal);
+        });
+
+        // Запускаем расчет сразу
+        calculateTotal();
     });
+</script>
 </script>
 {% endblock %}

@@ -51,7 +51,7 @@ def house_page(house_id):
         # Читаем все файлы в папке
         files = os.listdir(folder_path)
         # Берем только те, что начинаются на 'image' и являются картинками
-        additional_images = [f for f in files if f.startswith('image') and f.endswith(('.jpg', '.jpeg', '.png'))]
+        additional_images = [f for f in files if f.startswith('image') and f.endswith(('.jpg', '.jpeg', '.png', '.JPG'))]
         additional_images.sort()  # Чтобы порядок был 1, 2, 3...
 
     return render_template('house.html',
@@ -60,6 +60,15 @@ def house_page(house_id):
                            booked_dates=[dict(ix) for ix in booked_dates],
                            all_services=all_services)
 
+def days_between(date1_str, date2_str):
+    # Превращаем строки в объекты даты
+    date_format = "%Y-%m-%d"
+    d1 = datetime.strptime(date1_str, date_format)
+    d2 = datetime.strptime(date2_str, date_format)
+
+    # Вычитаем и берем модуль (abs), чтобы не важен был порядок дат
+    delta = abs(d2 - d1)
+    return delta.days
 
 @app.route('/book/<int:house_id>', methods=['POST'])
 def book_house(house_id):
@@ -88,10 +97,27 @@ def book_house(house_id):
 
     # 3. Сохраняем в базу данных
     conn = get_db_connection()
+
+    house = conn.execute('SELECT price_per_night FROM houses WHERE id = ?', (house_id,)).fetchone()
+
+    total_price = house['price_per_night'] * days_between(check_in, check_out)
+
+    # Получаем список ID выбранных услуг
+    selected_ids = request.form.getlist('selected_services')
+
+    if selected_ids:
+        # Считаем сумму услуг из базы
+        placeholders = ','.join(['?'] * len(selected_ids))
+        services_data = conn.execute(f'SELECT price FROM services WHERE id IN ({placeholders})',
+                                     selected_ids).fetchall()
+        for s in services_data:
+            total_price += s['price']
+
+
     conn.execute('''
-        INSERT INTO bookings (house_id, client_name, client_phone, check_in, check_out, services) 
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (house_id, name, phone, check_in, check_out, services_string))
+        INSERT INTO bookings (house_id, client_name, client_phone, check_in, check_out, services, total_price) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (house_id, name, phone, check_in, check_out, ",".join(selected_ids), total_price))
 
     # Получаем название домика для Telegram, пока соединение открыто
     house = conn.execute('SELECT name FROM houses WHERE id = ?', (house_id,)).fetchone()
@@ -110,6 +136,7 @@ def book_house(house_id):
     # 4. Отправляем уведомление (эту функцию мы обсуждали раньше)
     msg = (
         f"🌲 Новая бронь!\n"
+        f"Сумма: {total_price} руб\n"
         f"🏠 {house['name']}{ss}\n"
         f"👤 {name}\n"
         f"📞 +7 {phone}\n"
