@@ -5,17 +5,12 @@ import sqlite3
 from datetime import datetime
 import requests
 import os
-from bot import notify_admin  # Импортируем нашу функцию
+from bot import bot, run_bot, notify_admin
 
 app = Flask(__name__)
 
-
 # Загружаем переменные из .env в окружение системы
 load_dotenv()
-
-# Читаем токен
-TOKEN = os.getenv('TELEGRAM_TOKEN')
-bot = telebot.TeleBot(TOKEN)
 
 # Читаем ID админа (или ник)
 chat_id = os.getenv('ADMIN_NICKNAME')
@@ -27,6 +22,13 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row  # Это позволяет обращаться к колонкам по именам: house['name']
     return conn
 
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+@app.route('/oferta')
+def oferta():
+    return render_template('oferta.html')
 
 # Главная страница
 @app.route('/')
@@ -221,26 +223,15 @@ def services():
 
 import threading
 
-def run_bot():
-    """Функция для запуска бота в бесконечном цикле"""
-    print("--- [LOG] Бот запускается в фоновом потоке ---")
-    try:
-        # Используем infinity_polling, чтобы он сам перезапускался при ошибках
-        bot.infinity_polling(timeout=10, long_polling_timeout=5)
-    except Exception as e:
-        print(f"--- [LOG] Критическая ошибка бота: {e} ---")
-
-
 if __name__ == '__main__':
-    # Проверка Flask-релоадера:
-    # Flask в режиме debug=True запускает код дважды.
-    # Эта проверка гарантирует, что бот запустится только один раз.
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        bot_thread = threading.Thread(target=run_bot)
-        bot_thread.daemon = True  # Поток умрет вместе с основным процессом
-        bot_thread.start()
+    # Эта проверка — стальной щит от 409 ошибки во Flask
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        print("--- [DEBUG] Запуск бота в дочернем процессе Flask ---")
+        import threading
 
-    # Запускаем сайт
-    # debug=True оставляем для разработки, на 8000 порту как ты и хотел
+        # Используем daemon=True, чтобы поток закрывался вместе с сервером
+        t = threading.Thread(target=run_bot, daemon=True)
+        t.start()
+
     app.run(debug=True, port=8000)
 

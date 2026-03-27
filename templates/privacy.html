@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Политика конфиденциальности — Уютная Хижина{% endblock %}
+
+{% block content %}
+<div class="container" style="display: block; max-width: 800px; margin: 40px auto; line-height: 1.6; color: #333; font-family: sans-serif;">
+
+    <section style="margin-bottom: 50px;">
+        <h1 style="color: var(--accent-wood); border-bottom: 2px solid var(--accent-wood); padding-bottom: 10px;">Политика конфиденциальности</h1>
+        <p>Мы заботимся о ваших данных. Использование сайта «Уютная Хижина» означает согласие с обработкой персональных данных.</p>
+
+        <h3>1. Сбор данных</h3>
+        <p>Мы запрашиваем ваше имя, телефон и email только для оформления бронирования и связи с вами. Мы не передаем эти данные третьим лицам.</p>
+
+        <h3>2. Безопасность платежей</h3>
+        <p>Оплата происходит через защищенный шлюз <strong>ЮKassa</strong>. Мы не получаем и не храним данные вашей банковской карты.</p>
+    </section>
+
+    <section style="margin-bottom: 50px; padding: 20px; background-color: #fdfaf5; border-radius: 8px; border: 1px solid #eee;">
+        <h2 style="color: #a0522d;">Условия возврата и отмены</h2>
+        <p>Мы понимаем, что планы могут меняться. Вот наши правила аннулирования бронирования:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr style="background: #eee;">
+                <th style="padding: 10px; border: 1px solid #ccc; text-align: left;">Срок отмены</th>
+                <th style="padding: 10px; border: 1px solid #ccc; text-align: left;">Сумма возврата</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ccc;">Более чем за 7 дней до заезда</td>
+                <td style="padding: 10px; border: 1px solid #ccc;">100% от суммы предоплаты</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ccc;">От 7 до 3 дней до заезда</td>
+                <td style="padding: 10px; border: 1px solid #ccc;">50% от суммы предоплаты</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ccc;">Менее чем за 3 дня до заезда</td>
+                <td style="padding: 10px; border: 1px solid #ccc;">Возврат не производится</td>
+            </tr>
+        </table>
+
+        <h3>Как оформить возврат?</h3>
+        <p>Для возврата денежных средств напишите нам на почту <a href="mailto:glebegor1982@gmail.com">glebegor1982@gmail.com</a> или позвоните по телефону. Срок обработки возврата банком составляет от 1 до 30 рабочих дней.</p>
+    </section>
+
+    <div style="border-top: 1px solid #ddd; padding-top: 20px; font-size: 0.9rem; color: #666;">
+        <p>ИНН: 000000000000</p>
+    </div>
+</div>
+{% endblock %}

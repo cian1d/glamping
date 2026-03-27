@@ -1,19 +1,9 @@
 import telebot  # Рекомендую установить: pip install pyTelegramBotAPI
 import sqlite3
-
 from dotenv import load_dotenv
 from telebot import types
 import os
-import shutil
-import time
 from threading import Timer # Чтобы подождать, пока все фото из альбома дойдут
-# Кто сейчас загружает фото? {chat_id: house_id}
-user_upload_state = {}
-# Хранилище для медиа: {media_group_id: [file_ids]}
-album_data = {}
-
-# {chat_id: {'service_id': 1, 'field': 'name'}}
-edit_service_state = {}
 
 # Загружаем переменные из .env в окружение системы
 load_dotenv()
@@ -21,6 +11,14 @@ load_dotenv()
 # Читаем токен
 TOKEN = os.getenv('TELEGRAM_TOKEN')
 bot = telebot.TeleBot(TOKEN)
+
+# Кто сейчас загружает фото? {chat_id: house_id}
+user_upload_state = {}
+# Хранилище для медиа: {media_group_id: [file_ids]}
+album_data = {}
+
+# {chat_id: {'service_id': 1, 'field': 'name'}}
+edit_service_state = {}
 
 # Читаем ID админа (или ник)
 chat_id = os.getenv('ADMIN_NICKNAME')
@@ -897,6 +895,13 @@ def callback_page(call):
         # Если текст не изменился (например, нажали "Назад" на 1 странице),
         # Telegram выдаст ошибку, ее можно просто проигнорировать
         pass
+
+def run_bot():
+    print("--- [LOG] Бот запускается в фоновом потоке ---")
+    try:
+        bot.infinity_polling(timeout=10, long_polling_timeout=5)
+    except Exception as e:
+        print(f"--- [LOG] Критическая ошибка бота: {e} ---")
 
 # if __name__ == "__main__":
 #     print("Бот запущен...")

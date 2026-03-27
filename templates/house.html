@@ -106,13 +106,21 @@
                         {{ house.price_per_night }} ₽
                     </div>
                 </div>
+                <div style="margin: 20px 0; font-size: 0.9rem; color: #555;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="agreement-checkbox" required style="margin-top: 4px;">
+                        <span>
+            Я согласен с условиями
+            <a href="/oferta" target="_blank" style="color: var(--accent-wood); text-decoration: underline;">публичной оферты</a>
+            и
+            <a href="/privacy" target="_blank" style="color: var(--accent-wood); text-decoration: underline;">политикой конфиденциальности</a>
+        </span>
+                    </label>
+                </div>
                 <button type="submit" class="btn" style="width: 100%; border: none; cursor: pointer; padding: 15px;">
                     Отправить заявку
                 </button>
             </form>
-            <p style="font-size: 0.75rem; text-align: center; margin-top: 15px; opacity: 0.5;">
-                Нажимая кнопку, вы соглашаетесь с правилами проживания в лесу 🌲
-            </p>
         </div>
     </section>
 </div>
