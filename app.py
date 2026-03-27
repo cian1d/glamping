@@ -3,14 +3,11 @@ import sqlite3
 from datetime import datetime
 import requests
 from bot import notify_admin  # Импортируем нашу функцию
-import os
 
 app = Flask(__name__)
 
 chat_id = str(open('static/nickname.txt').readline())
 
-port = int(os.environ.get("PORT", 5000))
-app.run(host='0.0.0.0', port=port)
 
 # Функция-помощник для связи с базой
 def get_db_connection():
@@ -210,5 +207,32 @@ def services():
     return render_template('services.html', services=services_data)
 
 
+# if __name__ == '__main__':
+#     app.run(debug=True, port=8000)
+
+import threading
+from bot import bot
+
+def run_bot():
+    """Функция для запуска бота в бесконечном цикле"""
+    print("--- [LOG] Бот запускается в фоновом потоке ---")
+    try:
+        # Используем infinity_polling, чтобы он сам перезапускался при ошибках
+        bot.infinity_polling(timeout=10, long_polling_timeout=5)
+    except Exception as e:
+        print(f"--- [LOG] Критическая ошибка бота: {e} ---")
+
+
 if __name__ == '__main__':
+    # Проверка Flask-релоадера:
+    # Flask в режиме debug=True запускает код дважды.
+    # Эта проверка гарантирует, что бот запустится только один раз.
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        bot_thread = threading.Thread(target=run_bot)
+        bot_thread.daemon = True  # Поток умрет вместе с основным процессом
+        bot_thread.start()
+
+    # Запускаем сайт
+    # debug=True оставляем для разработки, на 8000 порту как ты и хотел
     app.run(debug=True, port=8000)
+

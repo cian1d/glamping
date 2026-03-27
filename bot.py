@@ -1,5 +1,7 @@
 import telebot  # Рекомендую установить: pip install pyTelegramBotAPI
 import sqlite3
+
+from dotenv import load_dotenv
 from telebot import types
 import os
 import shutil
@@ -13,10 +15,15 @@ album_data = {}
 # {chat_id: {'service_id': 1, 'field': 'name'}}
 edit_service_state = {}
 
-TOKEN = str(open('static/token.txt').readline())
+# Загружаем переменные из .env в окружение системы
+load_dotenv()
+
+# Читаем токен
+TOKEN = os.getenv('TELEGRAM_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 
-chat_id = str(open('static/nickname.txt').readline())
+# Читаем ID админа (или ник)
+chat_id = os.getenv('ADMIN_NICKNAME')
 
 def get_db_connection():
     conn = sqlite3.connect('glamping.db')
@@ -891,6 +898,6 @@ def callback_page(call):
         # Telegram выдаст ошибку, ее можно просто проигнорировать
         pass
 
-if __name__ == "__main__":
-    print("Бот запущен...")
-    bot.polling(none_stop=True)
+# if __name__ == "__main__":
+#     print("Бот запущен...")
+#     bot.polling(none_stop=True)
