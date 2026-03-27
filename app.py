@@ -3,11 +3,14 @@ import sqlite3
 from datetime import datetime
 import requests
 from bot import notify_admin  # Импортируем нашу функцию
+import os
 
 app = Flask(__name__)
 
 chat_id = str(open('static/nickname.txt').readline())
 
+port = int(os.environ.get("PORT", 5000))
+app.run(host='0.0.0.0', port=port)
 
 # Функция-помощник для связи с базой
 def get_db_connection():
