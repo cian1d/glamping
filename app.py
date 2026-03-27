@@ -1,12 +1,24 @@
+import telebot
+from dotenv import load_dotenv
 from flask import Flask, render_template, request
 import sqlite3
 from datetime import datetime
 import requests
+import os
 from bot import notify_admin  # Импортируем нашу функцию
 
 app = Flask(__name__)
 
-chat_id = str(open('static/nickname.txt').readline())
+
+# Загружаем переменные из .env в окружение системы
+load_dotenv()
+
+# Читаем токен
+TOKEN = os.getenv('TELEGRAM_TOKEN')
+bot = telebot.TeleBot(TOKEN)
+
+# Читаем ID админа (или ник)
+chat_id = os.getenv('ADMIN_NICKNAME')
 
 
 # Функция-помощник для связи с базой
@@ -27,9 +39,6 @@ def index():
 
 
 # Страница конкретного домика
-import os
-
-
 @app.route('/house/<int:house_id>')
 def house_page(house_id):
     conn = get_db_connection()
@@ -211,7 +220,6 @@ def services():
 #     app.run(debug=True, port=8000)
 
 import threading
-from bot import bot
 
 def run_bot():
     """Функция для запуска бота в бесконечном цикле"""
