@@ -6,6 +6,7 @@ from datetime import datetime
 import requests
 import os
 from bot import bot, run_bot, notify_admin
+from main import init_db
 
 app = Flask(__name__)
 
@@ -262,6 +263,12 @@ def services():
 #     app.run(debug=True, port=8000)
 
 if __name__ == '__main__':
+    # Вызываем твою логику создания таблиц прямо здесь
+    try:
+        init_db()  # или импортируй функцию из main.py
+        print("--- [DATABASE] Таблицы проверены/созданы ---")
+    except Exception as e:
+        print(f"--- [ERROR] Ошибка БД: {e} ---")
     # # 1. Запуск бота в отдельном "демоне"
     # import threading
     # try:
