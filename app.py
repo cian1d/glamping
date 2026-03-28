@@ -262,18 +262,13 @@ def services():
 #     app.run(debug=True, port=8000)
 
 if __name__ == '__main__':
-    # 1. Запуск бота (без изменений)
+    # 1. Запуск бота
     import threading
-
+    print("--- [SYSTEM] Запуск бота ---")
     t = threading.Thread(target=run_bot, daemon=True)
     t.start()
 
-    # 2. А вот тут магия для Amvera:
-    # Мы ищем переменную 'PORT' (её Amvera создает сама).
-    # Если её нет (например, запуск на компе), ставим 8000.
-    port = int(os.environ.get("PORT", 8000))
-
-    print(f"--- [SYSTEM] Flask слушает порт: {port} ---")
-
-    # host='0.0.0.0' обязателен!
-    app.run(host='0.0.0.0', port=port, debug=False)
+    # 2. ЖЕСТКО СТАВИМ ПОРТ 80
+    # Это именно то, что ждет Amvera по умолчанию.
+    print("--- [SYSTEM] Взлетаем на порту 80 ---")
+    app.run(host='0.0.0.0', port=80, debug=False)
