@@ -752,7 +752,7 @@ def show_detail_booking(call, booking_id):
             f"🏠 <b>Услуги:</b> {full_title}\n"
             f"<b>Общая цена:</b> {booking['total_price']} руб\n"
             f"👤 <b>Гость:</b> {booking['client_name']}\n"
-            f"📞 <b>Телефон:</b> +7 {booking['client_phone']}\n"
+            f"📞 <b>Телефон:</b> <code>+7 {booking['client_phone']}</code>\n"
             f"📅 <b>Заезд:</b> {booking['check_in']}\n"
             f"🚪 <b>Выезд:</b> {booking['check_out']}\n"
         )
