@@ -1,8 +1,15 @@
+import os
 import sqlite3
 
 def init_db():
     # Соединяемся с файлом базы данных (если его нет, он создастся)
-    conn = sqlite3.connect('data/glamping.db')
+    if os.path.exists('/data'):
+        db_path = '/data/glamping.db'
+    else:
+        db_path = 'glamping.db'  # Оставляем так для локальной разработки
+
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     # 1. Удаляем таблицы полностью, чтобы сбросить счетчики ID

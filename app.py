@@ -240,5 +240,8 @@ if __name__ == '__main__':
         t = threading.Thread(target=run_bot, daemon=True)
         t.start()
 
-    app.run(debug=True, port=8000)
+    # Порт берем из переменной окружения, которую дает Amvera,
+    # либо используем 8000 по умолчанию для локальных тестов
+    port = int(os.environ.get("PORT", 8000))
+    app.run(debug=True, host='0.0.0.0', port=port)
 

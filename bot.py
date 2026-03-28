@@ -23,8 +23,15 @@ edit_service_state = {}
 # Читаем ID админа (или ник)
 chat_id = os.getenv('ADMIN_NICKNAME')
 
+
 def get_db_connection():
-    conn = sqlite3.connect('data/glamping.db')
+    # Проверяем, запущены ли мы на сервере Amvera (там есть папка /data)
+    if os.path.exists('/data'):
+        db_path = '/data/glamping.db'
+    else:
+        db_path = 'glamping.db'  # Оставляем так для локальной разработки
+
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
