@@ -262,13 +262,17 @@ def services():
 #     app.run(debug=True, port=8000)
 
 if __name__ == '__main__':
-    # 1. Запуск бота
+    # 1. Запуск бота в отдельном "демоне"
     import threading
-    print("--- [SYSTEM] Запуск бота ---")
-    t = threading.Thread(target=run_bot, daemon=True)
-    t.start()
+    try:
+        t = threading.Thread(target=run_bot, daemon=True)
+        t.start()
+    except Exception as e:
+        print(f"Ошибка запуска бота: {e}")
 
-    # 2. ЖЕСТКО СТАВИМ ПОРТ 80
-    # Это именно то, что ждет Amvera по умолчанию.
-    print("--- [SYSTEM] Взлетаем на порту 80 ---")
-    app.run(host='0.0.0.0', port=80, debug=False)
+    # 2. Жестко ставим порт 80
+    # На Amvera это самый стабильный вариант для избавления от 503/502
+    try:
+        app.run(host='0.0.0.0', port=80, debug=False, use_reloader=False)
+    except Exception as e:
+        print(f"Ошибка запуска Flask: {e}")
