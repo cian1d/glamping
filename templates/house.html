@@ -64,7 +64,7 @@
                 {{ house['price_per_night'] }} ₽ / ночь
             </p>
 
-            <form action="/book/{{ house['id'] }}" method="POST">
+            <form action="/create_payment" method="POST">
                 <div style="margin-bottom: 15px;">
                     <label>Ваше имя</label>
                     <input type="text" name="client_name" required
@@ -117,6 +117,8 @@
         </span>
                     </label>
                 </div>
+                <input type="hidden" name="house_id" value="{{ house['id'] }}">
+                <input type="hidden" name="total_price" id="total_price_input" value="{{ house.price_per_night }}">
                 <button type="submit" class="btn" style="width: 100%; border: none; cursor: pointer; padding: 15px;">
                     Отправить заявку
                 </button>
@@ -431,6 +433,13 @@
             if (nights > 0) {
                 display.innerHTML = `${total.toLocaleString('ru-RU')} ₽ <span style="font-size: 1rem; color: #888;">(за ${nights} ноч.)</span>`;
             }
+            const total = (effectiveNights * pricePerNight) + servicesTotal;
+
+            // 1. Это у тебя уже есть (обновление текста на экране)
+            display.innerText = total.toLocaleString('ru-RU') + " ₽";
+
+            // 2. А ЭТО ДОБАВЛЯЕМ (обновление значения для сервера)
+            document.getElementById('total_price_input').value = total
         }
 
         // Привязываемся к календарю через onChange во Flatpickr

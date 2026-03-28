@@ -23,35 +23,88 @@ from yookassa import Configuration, Payment
 Configuration.account_id = os.getenv('SHOP_ID')
 Configuration.secret_key = os.getenv('PAYMENT_TOKEN')
 
-def get_payment_url(amount, description="Оплата услуг"):
-    """Создает платеж и возвращает ссылку на него"""
+
+@app.route('/create_payment', methods=['POST'])
+def create_payment():
+    # Собираем данные из твоей формы (те самые name="...")
+    house_id = request.form.get('house_id')
+    name = request.form.get('client_name')
+    phone = request.form.get('client_phone')
+    dates = request.form.get('booking_dates')
+    total_price = request.form.get('total_price')  # Та самая цена из JS
+
+    # Собираем список услуг (придут ID выбранных чекбоксов)
+    services_ids = request.form.getlist('selected_services')
+    services_str = ", ".join(services_ids) if services_ids else "Без доп. услуг"
+
+    # Создаем уникальный ключ транзакции
     idempotency_key = str(uuid.uuid4())
 
+    # Формируем платеж для ЮKassa
     payment = Payment.create({
         "amount": {
-            "value": str(amount),  # Сумма должна быть строкой
+            "value": f"{total_price}.00",
             "currency": "RUB"
         },
         "confirmation": {
             "type": "redirect",
-            "return_url": request.host_url  # Возвращаем пользователя на главную сайта
+            "return_url": request.host_url + "thanks"  # Куда вернуть юзера после оплаты
         },
         "capture": True,
-        "description": description
+        "description": f"Бронь дома №{house_id} для {name}",
+        "metadata": {
+            # ЭТО САМОЕ ВАЖНОЕ: ЮKassa хранит эти данные у себя
+            # и вернет их нам в Webhook только ПОСЛЕ успешной оплаты
+            "house_id": house_id,
+            "name": name,
+            "phone": phone,
+            "dates": dates,
+            "services": services_str
+        }
     }, idempotency_key)
 
-    return payment.confirmation.confirmation_url
+    # Отправляем пользователя на страницу оплаты ЮKassa
+    return redirect(payment.confirmation.confirmation_url)
 
-@app.route('/pay', methods=['POST'])
-def pay():
-    # Берем сумму из формы на сайте
-    price = request.form.get('price')
 
-    # Генерируем ссылку через нашу функцию
-    url = get_payment_url(price, "Бронирование в глэмпинге")
+@app.route('/yookassa_webhook', methods=['POST'])
+def yookassa_webhook():
+    # Получаем данные от ЮKassa
+    event_json = request.json
 
-    # Отправляем пользователя платить
-    return redirect(url)
+    if event_json.get('event') == 'payment.succeeded':
+        payment_obj = event_json['object']
+        meta = payment_obj.get('metadata')  # Достаем наши припрятанные данные
+
+        # ЗАПИСЫВАЕМ В БАЗУ ДАННЫХ
+        try:
+            conn = get_db_connection()
+            conn.execute('''
+                INSERT INTO bookings (house_id, client_name, client_phone, check_in_out, services, total_price)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                meta['house_id'],
+                meta['name'],
+                meta['phone'],
+                meta['dates'],
+                meta['services'],
+                payment_obj['amount']['value']
+            ))
+            conn.commit()
+            conn.close()
+
+            # Уведомляем тебя в телеграм (используем твою функцию из bot.py)
+            msg = (f"💰 <b>ОПЛАТА ПОЛУЧЕНА!</b>\n"
+                   f"Дом: {meta['house_id']}\n"
+                   f"Гость: {meta['name']}\n"
+                   f"Сумма: {payment_obj['amount']['value']} руб.\n"
+                   f"Даты: {meta['dates']}")
+            notify_admin(msg)
+
+        except Exception as e:
+            print(f"Ошибка при сохранении оплаченной брони: {e}")
+
+    return 'OK', 200
 
 # Функция-помощник для связи с базой
 # Было: sqlite3.connect('glamping.db')
@@ -269,13 +322,13 @@ if __name__ == '__main__':
         print("--- [DATABASE] Таблицы проверены/созданы ---")
     except Exception as e:
         print(f"--- [ERROR] Ошибка БД: {e} ---")
-    # 1. Запуск бота в отдельном "демоне"
-    import threading
-    try:
-        t = threading.Thread(target=run_bot, daemon=True)
-        t.start()
-    except Exception as e:
-        print(f"Ошибка запуска бота: {e}")
+    # # 1. Запуск бота в отдельном "демоне"
+    # import threading
+    # try:
+    #     t = threading.Thread(target=run_bot, daemon=True)
+    #     t.start()
+    # except Exception as e:
+    #     print(f"Ошибка запуска бота: {e}")
 
     # 2. Жестко ставим порт 80
     # На Amvera это самый стабильный вариант для избавления от 503/502
