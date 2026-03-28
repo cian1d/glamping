@@ -399,21 +399,14 @@
         function calculateTotal() {
             let nights = 0;
 
-            // Достаем инстанс flatpickr из элемента
-            const fp = calendarInput._flatpickr;
-
-            if (fp && fp.selectedDates.length === 2) {
-                const start = fp.selectedDates[0];
-                const end = fp.selectedDates[1];
-                const diffTime = Math.abs(end - start);
-                nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            } else {
-                // Если даты не выбраны, считаем как за 0 ночей или за 1 (как тебе удобнее)
-                // Но логичнее 0, чтобы цена была только за доп. услуги, пока даты не ясны
-                nights = 0;
+            // 1. Считаем количество ночей
+            if (calendarInput._flatpickr && calendarInput._flatpickr.selectedDates.length === 2) {
+                const start = calendarInput._flatpickr.selectedDates[0];
+                const end = calendarInput._flatpickr.selectedDates[1];
+                nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
             }
 
-            // Считаем выбранные услуги
+            // 2. Считаем сумму за допуслуги
             let servicesTotal = 0;
             checkboxes.forEach(cb => {
                 if (cb.checked) {
@@ -421,25 +414,20 @@
                 }
             });
 
-            // Итоговая формула: (Ночи * Цена дома) + Услуги
-            // Если ночи не выбраны, показываем 0 или начальную цену?
-            // Сделаем так: если ночи > 0, считаем всё. Если 0, то только услуги + база за 1 ночь (как превью)
+            // 3. Итоговая формула
             const effectiveNights = nights > 0 ? nights : 1;
             const total = (effectiveNights * pricePerNight) + servicesTotal;
 
+            // 4. Обновляем текст на экране
             display.innerText = total.toLocaleString('ru-RU') + " ₽";
-
-            // Если даты выбраны, можно добавить приписку "за X ночей"
             if (nights > 0) {
                 display.innerHTML = `${total.toLocaleString('ru-RU')} ₽ <span style="font-size: 1rem; color: #888;">(за ${nights} ноч.)</span>`;
             }
-            const total = (effectiveNights * pricePerNight) + servicesTotal;
 
-            // 1. Это у тебя уже есть (обновление текста на экране)
-            display.innerText = total.toLocaleString('ru-RU') + " ₽";
-
-            // 2. А ЭТО ДОБАВЛЯЕМ (обновление значения для сервера)
-            document.getElementById('total_price_input').value = total
+            // 5. ЗАПИСЫВАЕМ В СКРЫТОЕ ПОЛЕ (чтобы улетело на сервер)
+            if (hiddenTotalInput) {
+                hiddenTotalInput.value = total;
+            }
         }
 
         // Привязываемся к календарю через onChange во Flatpickr
