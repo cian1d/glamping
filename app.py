@@ -328,13 +328,13 @@ if __name__ == '__main__':
         print("--- [DATABASE] Таблицы проверены/созданы ---")
     except Exception as e:
         print(f"--- [ERROR] Ошибка БД: {e} ---")
-    # # 1. Запуск бота в отдельном "демоне"
-    # import threading
-    # try:
-    #     t = threading.Thread(target=run_bot, daemon=True)
-    #     t.start()
-    # except Exception as e:
-    #     print(f"Ошибка запуска бота: {e}")
+    # 1. Запуск бота в отдельном "демоне"
+    import threading
+    try:
+        t = threading.Thread(target=run_bot, daemon=True)
+        t.start()
+    except Exception as e:
+        print(f"Ошибка запуска бота: {e}")
 
     # 2. Жестко ставим порт 80
     # На Amvera это самый стабильный вариант для избавления от 503/502
