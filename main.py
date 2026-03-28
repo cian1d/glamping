@@ -2,7 +2,7 @@ import sqlite3
 
 def init_db():
     # Соединяемся с файлом базы данных (если его нет, он создастся)
-    conn = sqlite3.connect('glamping.db')
+    conn = sqlite3.connect('data/glamping.db')
     cursor = conn.cursor()
 
     # 1. Удаляем таблицы полностью, чтобы сбросить счетчики ID
@@ -106,7 +106,7 @@ def init_db():
     print("База данных успешно создана и заполнена!")
 
 def get_house(house_id):
-    conn = sqlite3.connect('glamping.db')
+    conn = sqlite3.connect('data/glamping.db')
     # Позволяет обращаться к полям по именам, а не по индексам
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()

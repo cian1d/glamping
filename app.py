@@ -17,9 +17,13 @@ chat_id = os.getenv('ADMIN_NICKNAME')
 
 
 # Функция-помощник для связи с базой
+# Было: sqlite3.connect('glamping.db')
+# Стало:
 def get_db_connection():
-    conn = sqlite3.connect('glamping.db')
-    conn.row_factory = sqlite3.Row  # Это позволяет обращаться к колонкам по именам: house['name']
+    # Проверяем, существует ли папка /data (на компе её нет, на сервере есть)
+    db_path = '/data/glamping.db' if os.path.exists('/data') else 'glamping.db'
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
     return conn
 
 @app.route('/privacy')
@@ -222,6 +226,9 @@ def services():
 #     app.run(debug=True, port=8000)
 
 import threading
+
+#10485760
+#45054854
 
 if __name__ == '__main__':
     # Эта проверка — стальной щит от 409 ошибки во Flask

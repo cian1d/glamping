@@ -24,7 +24,7 @@ edit_service_state = {}
 chat_id = os.getenv('ADMIN_NICKNAME')
 
 def get_db_connection():
-    conn = sqlite3.connect('glamping.db')
+    conn = sqlite3.connect('data/glamping.db')
     conn.row_factory = sqlite3.Row
     return conn
 
