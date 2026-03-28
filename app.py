@@ -225,23 +225,13 @@ def services():
 # if __name__ == '__main__':
 #     app.run(debug=True, port=8000)
 
-import threading
-
-#10485760
-#45054854
-
 if __name__ == '__main__':
-    # Эта проверка — стальной щит от 409 ошибки во Flask
-    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        print("--- [DEBUG] Запуск бота в дочернем процессе Flask ---")
-        import threading
+    # Запуск бота в отдельном потоке
+    import threading
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
 
-        # Используем daemon=True, чтобы поток закрывался вместе с сервером
-        t = threading.Thread(target=run_bot, daemon=True)
-        t.start()
-
-    # Порт берем из переменной окружения, которую дает Amvera,
-    # либо используем 8000 по умолчанию для локальных тестов
+    # Запуск Flask на правильном хосте и порту
     port = int(os.environ.get("PORT", 8000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port)
 
