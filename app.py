@@ -1,6 +1,6 @@
 import telebot
 from dotenv import load_dotenv
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 import sqlite3
 from datetime import datetime
 import requests
@@ -15,6 +15,42 @@ load_dotenv()
 # Читаем ID админа (или ник)
 chat_id = os.getenv('ADMIN_NICKNAME')
 
+import uuid
+from yookassa import Configuration, Payment
+
+# Настройка ключей (убедись, что они есть в переменных Amvera)
+Configuration.account_id = os.getenv('SHOP_ID')
+Configuration.secret_key = os.getenv('PAYMENT_TOKEN')
+
+def get_payment_url(amount, description="Оплата услуг"):
+    """Создает платеж и возвращает ссылку на него"""
+    idempotency_key = str(uuid.uuid4())
+
+    payment = Payment.create({
+        "amount": {
+            "value": str(amount),  # Сумма должна быть строкой
+            "currency": "RUB"
+        },
+        "confirmation": {
+            "type": "redirect",
+            "return_url": request.host_url  # Возвращаем пользователя на главную сайта
+        },
+        "capture": True,
+        "description": description
+    }, idempotency_key)
+
+    return payment.confirmation.confirmation_url
+
+@app.route('/pay', methods=['POST'])
+def pay():
+    # Берем сумму из формы на сайте
+    price = request.form.get('price')
+
+    # Генерируем ссылку через нашу функцию
+    url = get_payment_url(price, "Бронирование в глэмпинге")
+
+    # Отправляем пользователя платить
+    return redirect(url)
 
 # Функция-помощник для связи с базой
 # Было: sqlite3.connect('glamping.db')
@@ -226,12 +262,14 @@ def services():
 #     app.run(debug=True, port=8000)
 
 if __name__ == '__main__':
-    # Запуск бота в отдельном потоке
+    # 1. Запускаем бота ОДИН раз
     import threading
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
+    print("--- [SYSTEM] Запуск бота в отдельном потоке ---")
+    t = threading.Thread(target=run_bot, daemon=True)
+    t.start()
 
-    # Запуск Flask на правильном хосте и порту
+    # 2. Запускаем Flask БЕЗ debug режима для Amvera
     port = int(os.environ.get("PORT", 8000))
-    app.run(host='0.0.0.0', port=port)
+    # debug=False критически важен, чтобы не было ошибки 409
+    app.run(host='0.0.0.0', port=port, debug=False)
 
