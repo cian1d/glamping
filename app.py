@@ -262,19 +262,18 @@ def services():
 #     app.run(debug=True, port=8000)
 
 if __name__ == '__main__':
-    # Запуск бота
+    # 1. Запуск бота (без изменений)
     import threading
 
     t = threading.Thread(target=run_bot, daemon=True)
     t.start()
 
-    # Запуск Flask
-    # На Amvera PORT может быть строкой или отсутствовать, обрабатываем это
-    raw_port = os.environ.get("PORT", "8000")
-    current_port = int(raw_port)
+    # 2. А вот тут магия для Amvera:
+    # Мы ищем переменную 'PORT' (её Amvera создает сама).
+    # Если её нет (например, запуск на компе), ставим 8000.
+    port = int(os.environ.get("PORT", 8000))
 
-    print(f"--- [SYSTEM] Запуск на порту: {current_port} ---")
+    print(f"--- [SYSTEM] Flask слушает порт: {port} ---")
 
-    # debug=False ОБЯЗАТЕЛЬНО для работы без 502 и 409 ошибок
-    app.run(host='0.0.0.0', port=current_port, debug=False)
-
+    # host='0.0.0.0' обязателен!
+    app.run(host='0.0.0.0', port=port, debug=False)
