@@ -283,77 +283,6 @@ def callback_field_selected(call):
         bot.send_message(call.message.chat.id, f"Введите {field_names[field]} для услуги:")
 
 
-@bot.message_handler(content_types=['photo'])
-def handle_service_photo(message):
-    chat_id = message.chat.id
-    state = edit_service_state.get(chat_id)
-
-    if not state:
-        bot.send_message(chat_id, "Чтобы изменить фото, сначала выберите услугу и нажмите 'Редактировать'.")
-        return
-
-    # --- СЦЕНАРИЙ 1: ДОБАВЛЕНИЕ НОВОЙ УСЛУГИ (шаг 'photo') ---
-    if state.get('step') == 'photo':
-        try:
-            # Сначала создаем запись в БД, чтобы получить ID
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute('''
-                INSERT INTO services (name, description, price, image_filename) 
-                VALUES (?, ?, ?, ?)
-            ''', (state['name'], state['description'], state['price'], 'temp.jpg'))
-
-            new_id = cursor.lastrowid  # Получаем ID новой услуги
-
-            # Формируем имя servN.jpg
-            filename = f"serv{new_id}.jpg"
-            path = os.path.join('static', 'img', 'services', filename)
-
-            # Скачиваем фото
-            file_info = bot.get_file(message.photo[-1].file_id)
-            downloaded_file = bot.download_file(file_info.file_path)
-
-            with open(path, 'wb') as f:
-                f.write(downloaded_file)
-
-            # Обновляем имя файла в базе
-            cursor.execute('UPDATE services SET image_filename = ? WHERE id = ?', (filename, new_id))
-            conn.commit()
-            conn.close()
-
-            del edit_service_state[chat_id]
-            bot.send_message(chat_id, f"✅ Услуга №{new_id} успешно создана!")
-            show_services(message)
-
-        except Exception as e:
-            bot.send_message(chat_id, f"❌ Ошибка при создании: {e}")
-
-    # --- СЦЕНАРИЙ 2: РЕДАКТИРОВАНИЕ ФОТО СУЩЕСТВУЮЩЕЙ УСЛУГИ ---
-    elif state.get('field') == 'image_filename':
-        service_id = state['service_id']
-        try:
-            file_info = bot.get_file(message.photo[-1].file_id)
-            downloaded_file = bot.download_file(file_info.file_path)
-
-            # Имя остается таким же (service_N.jpg), файл просто перезапишется
-            filename = f"service_{service_id}.jpg"
-            save_path = os.path.join('static', 'img', 'services', filename)
-
-            with open(save_path, 'wb') as new_file:
-                new_file.write(downloaded_file)
-
-            # На всякий случай обновляем путь в базе (если вдруг раньше там было другое имя)
-            conn = get_db_connection()
-            conn.execute('UPDATE services SET image_filename = ? WHERE id = ?', (filename, service_id))
-            conn.commit()
-            conn.close()
-
-            del edit_service_state[chat_id]
-            bot.send_message(chat_id, "✅ Фотография услуги обновлена!")
-            show_services(message)
-
-        except Exception as e:
-            bot.send_message(chat_id, f"❌ Ошибка при редактировании: {e}")
 
 
 def show_houses(message):
@@ -546,37 +475,51 @@ def request_new_images(call):
 # Этот обработчик теперь ловит ВСЕ фото, если пользователь в режиме загрузки
 # Теперь слушаем и фото, и документы (файлы)
 @bot.message_handler(content_types=['photo', 'document'])
-def handle_media_upload(message):
+def handle_universal_upload(message):
     chat_id = message.chat.id
-    if chat_id not in user_upload_state:
-        return
 
-    # Определяем, откуда брать file_id
-    file_id = None
-    if message.content_type == 'photo':
-        file_id = message.photo[-1].file_id
-    elif message.content_type == 'document':
-        # Проверяем, что это картинка (опционально)
-        if message.document.mime_type and message.document.mime_type.startswith('image/'):
-            file_id = message.document.file_id
-        else:
-            bot.send_message(chat_id, "❌ Этот файл не похож на изображение. Пропускаю его.")
+    # --- СИТУАЦИЯ 1: ЗАГРУЗКА ДЛЯ ДОМИКОВ ---
+    if chat_id in user_upload_state:
+        # Твой текущий код для домиков
+        file_id = None
+        if message.content_type == 'photo':
+            file_id = message.photo[-1].file_id
+        elif message.content_type == 'document':
+            if message.document.mime_type and message.document.mime_type.startswith('image/'):
+                file_id = message.document.file_id
+            else:
+                bot.send_message(chat_id, "❌ Это не изображение.")
+                return
+
+        house_id = user_upload_state[chat_id]
+        m_group_id = message.media_group_id if message.media_group_id else f"single_{message.message_id}"
+
+        if m_group_id not in album_data:
+            album_data[m_group_id] = []
+            Timer(2.0, finalize_images_upload, args=[m_group_id, chat_id, house_id]).start()
+
+        album_data[m_group_id].append({'message_id': message.message_id, 'file_id': file_id})
+        print(f"[LOG] Фото для ДОМА {house_id} получено")
+        return  # Важно: выходим, чтобы не идти в логику услуг
+
+    # --- СИТУАЦИЯ 2: ЗАГРУЗКА ДЛЯ УСЛУГ ---
+    state = edit_service_state.get(chat_id)
+    if state:
+        # Переносим сюда логику из функции handle_service_photo
+        if message.content_type != 'photo':
+            bot.send_message(chat_id, "Для услуг отправляйте обычное фото (не файл).")
             return
 
-    house_id = user_upload_state[chat_id]
-    m_group_id = message.media_group_id if message.media_group_id else f"single_{message.message_id}"
+        if state.get('step') == 'photo':
+            # Логика создания НОВОЙ услуги (твой код из handle_service_photo)
+            add_service_start(message, state)
+        elif state.get('field') == 'image_filename':
+            # Логика обновления фото СУЩЕСТВУЮЩЕЙ услуги
+            callback_field_selected(message, state)
+        return
 
-    if m_group_id not in album_data:
-        album_data[m_group_id] = []
-        # Таймер на 2 секунды, чтобы собрать все части альбома
-        Timer(2.0, finalize_images_upload, args=[m_group_id, chat_id, house_id]).start()
-
-    # Сохраняем данные для сортировки
-    album_data[m_group_id].append({
-        'message_id': message.message_id,
-        'file_id': file_id
-    })
-    print(f"[LOG] Получен {message.content_type} (msg_id: {message.message_id})")
+    # Если мы ни в каком режиме
+    # bot.send_message(chat_id, "Чтобы загрузить фото, сначала выберите объект в меню.")
 
 
 def finalize_images_upload(m_group_id, chat_id, house_id):
