@@ -23,24 +23,26 @@ from yookassa import Configuration, Payment
 Configuration.account_id = os.getenv('SHOP_ID')
 Configuration.secret_key = os.getenv('PAYMENT_TOKEN')
 
+# 1. Настройка ключей ЮKassa
+Configuration.account_id = os.getenv('SHOP_ID')
+Configuration.secret_key = os.getenv('PAYMENT_TOKEN')
+
 
 @app.route('/create_payment', methods=['POST'])
 def create_payment():
-    # Собираем данные из твоей формы (те самые name="...")
+    # Собираем данные из твоей формы в house.html
     house_id = request.form.get('house_id')
     name = request.form.get('client_name')
     phone = request.form.get('client_phone')
     dates = request.form.get('booking_dates')
-    total_price = request.form.get('total_price')  # Та самая цена из JS
+    total_price = request.form.get('total_price')  # То самое скрытое поле из JS
 
-    # Собираем список услуг (придут ID выбранных чекбоксов)
-    services_ids = request.form.getlist('selected_services')
-    services_str = ", ".join(services_ids) if services_ids else "Без доп. услуг"
+    # Собираем услуги (чекбоксы name="selected_services")
+    selected_services = request.form.getlist('selected_services')
+    services_str = ", ".join(selected_services) if selected_services else "Нет"
 
-    # Создаем уникальный ключ транзакции
+    # Создаем объект платежа
     idempotency_key = str(uuid.uuid4())
-
-    # Формируем платеж для ЮKassa
     payment = Payment.create({
         "amount": {
             "value": f"{total_price}.00",
@@ -48,13 +50,11 @@ def create_payment():
         },
         "confirmation": {
             "type": "redirect",
-            "return_url": request.host_url + "thanks"  # Куда вернуть юзера после оплаты
+            "return_url": request.host_url + "thanks"  # Куда вернуть юзера
         },
         "capture": True,
-        "description": f"Бронь дома №{house_id} для {name}",
+        "description": f"Бронь дома №{house_id} ({name})",
         "metadata": {
-            # ЭТО САМОЕ ВАЖНОЕ: ЮKassa хранит эти данные у себя
-            # и вернет их нам в Webhook только ПОСЛЕ успешной оплаты
             "house_id": house_id,
             "name": name,
             "phone": phone,
@@ -63,8 +63,14 @@ def create_payment():
         }
     }, idempotency_key)
 
-    # Отправляем пользователя на страницу оплаты ЮKassa
+    # Вот тут происходит магия: редирект на страницу оплаты ЮKassa
     return redirect(payment.confirmation.confirmation_url)
+
+
+@app.route('/thanks')
+def thanks():
+    # Простая страница благодарности
+    return "<h1>Спасибо! Оплата прошла успешно. Мы свяжемся с вами!</h1>"
 
 
 @app.route('/yookassa_webhook', methods=['POST'])

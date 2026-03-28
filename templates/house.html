@@ -64,7 +64,7 @@
                 {{ house['price_per_night'] }} ₽ / ночь
             </p>
 
-            <form action="/create_payment" method="POST">
+            <form action="/book/{{ house['id'] }}" method="POST">
                 <div style="margin-bottom: 15px;">
                     <label>Ваше имя</label>
                     <input type="text" name="client_name" required
@@ -120,7 +120,7 @@
                 <input type="hidden" name="house_id" value="{{ house['id'] }}">
                 <input type="hidden" name="total_price" id="total_price_input" value="{{ house.price_per_night }}">
                 <button type="submit" class="btn" style="width: 100%; border: none; cursor: pointer; padding: 15px;">
-                    Отправить заявку
+                    Отправить
                 </button>
             </form>
         </div>
