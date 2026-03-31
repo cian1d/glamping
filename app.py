@@ -14,7 +14,8 @@ app = Flask(__name__)
 load_dotenv()
 
 # Читаем ID админа (или ник)
-chat_id = os.getenv('ADMIN_NICKNAME')
+chat_ids = os.getenv('ADMIN_NICKNAME')
+chat_ids = list(map(str, chat_ids.split(',')))
 
 import uuid
 from yookassa import Configuration, Payment

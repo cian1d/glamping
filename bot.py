@@ -21,8 +21,16 @@ album_data = {}
 edit_service_state = {}
 
 # Читаем ID админа (или ник)
-chat_id = os.getenv('ADMIN_NICKNAME')
+chat_ids = os.getenv('ADMIN_NICKNAME')
+chat_ids = list(map(str, chat_ids.split(',')))
 
+# --- НОВЫЙ БЛОК ОГРАНИЧЕНИЯ ДОСТУПА ---
+
+# 1. Обработчик для всех, кого НЕТ в списке (сообщения)
+@bot.message_handler(func=lambda message: str(message.from_user.id) not in chat_ids)
+def access_denied(message):
+    bot.send_message(message.chat.id, "❌ Доступ запрещен. Вы не являетесь администратором.")
+    print(f"[AUTH] Попытка доступа от ID: {message.from_user.id}")
 
 def get_db_connection():
     # Проверяем, запущены ли мы на сервере Amvera (там есть папка /data)
@@ -648,8 +656,9 @@ def process_add_short_desc(message, house_data):
 
 # Эту функцию мы будем вызывать из app.py
 def notify_admin(msg):
-    global chat_id
-    bot.send_message(chat_id, msg, parse_mode='HTML')
+    global chat_ids
+    for chat_id in chat_ids:
+        bot.send_message(chat_id, msg, parse_mode='HTML')
 
 
 # Константа для количества элементов на странице /////////////////////////////////////////////////////////////////
