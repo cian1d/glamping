@@ -259,7 +259,11 @@ body {
     box-shadow: 0 15px 40px rgba(0,0,0,0.05);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     min-height: 350px;
-    min-width: 1000px;
+    flex-wrap: wrap; /* Позволяет тексту прыгнуть под картинку на мобильных */
+    width: 100%;
+    max-width: 100%; /* Запрещаем выходить за пределы экрана */
+    min-width: 0;    /* Позволяет флекс-элементу сжиматься меньше содержимого */
+    box-sizing: border-box;
 }
 
 .house-wide-card:hover {
@@ -269,11 +273,13 @@ body {
 
 /* Левая часть: Картинка */
 .wide-card-image {
-    flex: 1; /* Занимает половину ширины */
     background-size: cover;
     background-position: center;
     position: relative;
     min-width: 400px;
+    flex: 1 1 300px; /* 300px — это точка, после которой картинка займет всю ширину */
+    width: 100%;
+    max-width: 100%;
 }
 
 .price-badge {
@@ -290,11 +296,13 @@ body {
 
 /* Правая часть: Контент */
 .wide-card-content {
-    flex: 1;
-    padding: 40px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    flex: 1 1 280px; /* Если экран меньше 280px, блок уйдет вниз */
+    width: 100%;
+    box-sizing: border-box;
+    padding: 20px; /* Уменьшите отступы для мобильных */
 }
 
 .wide-card-title {

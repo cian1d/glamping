@@ -4,13 +4,55 @@
 
 {% block content %}
 
-<section class="services-hero">
+<style>
+    /* Базовая настройка для всех элементов */
+    * { box-sizing: border-box; }
+
+    .house-wide-card {
+        display: flex;
+        flex-wrap: wrap; /* Позволяет контенту падать вниз на мобильных */
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 25px;
+        border-radius: 20px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    /* Картинка: на десктопе часть ряда, на мобильном - во всю ширину */
+    .wide-card-image {
+        flex: 1 1 280px; /* Сжимается до 280px, затем переносится */
+        height: 200px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+
+    /* Текстовый блок */
+    .wide-card-content {
+        flex: 1.5 1 280px; /* Занимает чуть больше места, чем картинка */
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    /* Адаптивный заголовок секции */
+    .services-hero h1 {
+        font-size: clamp(1.8rem, 6vw, 3rem); /* Плавно уменьшается на мобильных */
+        padding: 0 20px;
+        text-align: center;
+    }
+</style>
+
+<section class="services-hero" style="min-height: 250px; display: flex; align-items: center; justify-content: center;">
     <div class="services-hero-overlay">
         <h1>Дополнительные услуги</h1>
     </div>
 </section>
 
-<div class="booking-page-container">
+<div class="booking-page-container" style="width: 100%; max-width: 100%; padding: 0 15px; box-sizing: border-box; overflow-x: hidden;">
 
     <div class="divider"></div>
 

@@ -3,7 +3,7 @@
 {% block title %}{{ house['name'] }} — Уютная Хижина{% endblock %}
 
 {% block content %}
-<div class="container" style="flex-direction: column; align-items: flex-start; margin-top: 30px;">
+<div class="container" style="display: flex; flex-direction: column; align-items: flex-start; margin-top: 30px; padding: 0 15px; box-sizing: border-box; width: 100%; overflow-x: hidden;">
 
     <nav style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: var(--accent-wood); font-weight: bold;">← Назад к списку</a>
@@ -14,9 +14,9 @@
         <p class="subtitle">{{ house['short_description'] }}</p>
     </header>
 
-    <section class="house-detail" style="display: flex; gap: 40px; flex-wrap: wrap; width: 100%;">
+    <section class="house-detail" style="display: flex; gap: 15px; flex-wrap: wrap; width: 100%;">
 
-        <div style="flex: 2; min-width: 300px;">
+        <div style="flex: 2; min-width: 200px; width: 100%; max-width: 100%;">
             <div class="house-gallery">
                 <div class="main-image-viewport">
                     <div class="images-track" id="images-track">
@@ -49,7 +49,7 @@
                 <p style="font-size: 1.1rem; line-height: 1.8; opacity: 0.9;">{{ house['description'] }}</p>
 
                 <h3 style="margin-top: 30px;">Что внутри:</h3>
-                <ul style="column-count: 2; list-style-type: '🌲 '; padding-left: 20px;">
+                <ul style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; list-style-type: '🌲 '; padding-left: 20px;">
                     {% for feature in house['features'].split(',') %}
                     <li style="margin-bottom: 10px;">{{ feature.strip() }}</li>
                     {% endfor %}
@@ -58,7 +58,7 @@
         </div>
 
         <div class="booking-card"
-             style="flex: 1; min-width: 320px; background: white; padding: 30px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); height: fit-content; position: sticky; top: 20px;">
+             style="flex: 1 1 280px; width: 100%; max-width: 100%; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); height: fit-content; box-sizing: border-box;">
             <h3 style="margin-top: 0; font-family: var(--font-header);">Забронировать</h3>
             <p style="font-size: 1.2rem; font-weight: bold; color: var(--accent-wood); margin-bottom: 20px;">
                 {{ house['price_per_night'] }} ₽ / ночь

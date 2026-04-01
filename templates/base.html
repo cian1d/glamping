@@ -14,6 +14,28 @@
     <script src="https://unpkg.com/imask"></script>
 
     <style>
+        /* Глобальный сброс для всех элементов */
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Убираем горизонтальную прокрутку, если что-то всё-таки вылезло */
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Делаем все изображения гибкими */
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Это спасет от появления горизонтальной полосы прокрутки */
+        * {
+            box-sizing: border-box;
+        }
         /* 1. Обнуляем системные отступы */
         body, html {
             margin: 0;
