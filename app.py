@@ -344,6 +344,7 @@ def services():
 
 if __name__ == '__main__':
     init_db()
+
     # 1. Запуск бота в отдельном "демоне"
     import threading
     try:
