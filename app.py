@@ -76,49 +76,69 @@ def thanks():
 
 @app.route('/yookassa_webhook', methods=['POST'])
 def yookassa_webhook():
-    # Получаем данные от ЮKassa
+    # ЮKassa присылает данные в формате JSON
     event_json = request.json
 
+    # Проверяем, что событие — это успешная оплата
     if event_json.get('event') == 'payment.succeeded':
-        payment_obj = event_json['object']
-        meta = payment_obj.get('metadata')  # Достаем наши припрятанные данные
+        payment_object = event_json.get('object')
+        # Достаем наши данные, которые мы сохраняли в create_payment
+        meta = payment_object.get('metadata')
 
-        # ЗАПИСЫВАЕМ В БАЗУ ДАННЫХ
-        try:
-            conn = get_db_connection()
-            conn.execute('''
-                INSERT INTO bookings (house_id, client_name, client_phone, check_in_out, services, total_price)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                meta['house_id'],
-                meta['name'],
-                meta['phone'],
-                meta['dates'],
-                meta['services'],
-                payment_obj['amount']['value']
-            ))
-            conn.commit()
-            conn.close()
+        if meta:
+            house_id = meta.get('house_id')
+            client_name = meta.get('name')
+            client_phone = meta.get('phone')
+            dates = meta.get('dates')
+            # Сумма, которая реально пришла
+            amount = payment_object.get('amount', {}).get('value')
 
-            # Уведомляем тебя в телеграм (используем твою функцию из bot.py)
-            msg = (f"💰 <b>ОПЛАТА ПОЛУЧЕНА!</b>\n"
-                   f"Дом: {meta['house_id']}\n"
-                   f"Гость: {meta['name']}\n"
-                   f"Сумма: {payment_obj['amount']['value']} руб.\n"
-                   f"Даты: {meta['dates']}")
-            notify_admin(msg)
+            # 2. Дублируем ключевую информацию об оплате в логи Amvera
+            log_msg = f"[PAYMENT SUCCESS] Дом: {house_id} | Гость: {client_name} | Сумма: {amount} ₽"
+            print(log_msg)
 
-        except Exception as e:
-            print(f"Ошибка при сохранении оплаченной брони: {e}")
+            try:
+                # 1. ЗАПИСЫВАЕМ В БАЗУ ДАННЫХ
+                conn = get_db_connection()
+                conn.execute('''
+                    INSERT INTO bookings (house_id, client_name, client_phone, check_in_out, total_price)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (house_id, client_name, client_phone, dates, amount))
+                conn.commit()
+                conn.close()
 
+                # 2. УВЕДОМЛЯЕМ ТЕБЯ В ТЕЛЕГРАМ
+                # Используем <code> для копирования номера в буфер
+                msg = (
+                    f"💰 <b>НОВАЯ ОПЛАТА!</b>\n\n"
+                    f"🏠 Дом №: {house_id}\n"
+                    f"👤 Гость: {client_name}\n"
+                    f"📞 Тел: <code>{client_phone}</code>\n"
+                    f"📅 Даты: {dates}\n"
+                    f"💵 Сумма: {amount} ₽"
+                )
+                notify_admin(msg)
+
+            except Exception as e:
+                print(f"Ошибка при сохранении брони: {e}")
+
+    # Обязательно отвечаем ЮKassa 'OK' и кодом 200, иначе они будут слать уведомление снова и снова
     return 'OK', 200
 
 # Функция-помощник для связи с базой
 # Было: sqlite3.connect('glamping.db')
 # Стало:
 def get_db_connection():
-    # Проверяем, существует ли папка /data (на компе её нет, на сервере есть)
-    db_path = '/data/glamping.db' if os.path.exists('/data') else 'glamping.db'
+    # 1. Определяем путь к папке, где лежит сам файл app.py
+    basedir = os.path.abspath(os.path.dirname(__file__))
+
+    # 2. Выбираем путь в зависимости от среды (Amvera или локально)
+    if os.path.exists('/data'):
+        db_path = 'glamping.db'
+    else:
+        # Локально: берем папку проекта и соединяем с именем файла
+        db_path = os.path.join(basedir, 'glamping.db')
+
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
