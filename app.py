@@ -35,7 +35,8 @@ def create_payment():
     house_id = request.form.get('house_id')
     name = request.form.get('client_name')
     phone = request.form.get('client_phone')
-    dates = request.form.get('booking_dates')
+    dates = request.form.get('booking_dates').strip()
+    print(dates)
     total_price = request.form.get('total_price')  # То самое скрытое поле из JS
 
     # Собираем услуги (чекбоксы name="selected_services")
@@ -94,7 +95,7 @@ def yookassa_webhook():
             client_name = meta.get('name')
             client_phone = meta.get('phone')
             dates = meta.get('dates')
-            check_in, check_out = map(str, dates.strip().split('-'))
+            check_in, check_out = map(str, dates.strip().split('to'))
             services = meta.get('services')
             # Сумма, которая реально пришла
             amount = payment_object.get('amount', {}).get('value')
