@@ -345,13 +345,15 @@ def services():
 if __name__ == '__main__':
     init_db()
 
-    # 1. Запуск бота в отдельном "демоне"
-    import threading
-    try:
+    # Проверяем переменную окружения WERKZEUG_RUN_MAIN
+    # Flask устанавливает её для дочернего процесса.
+    # Без этой проверки бот запустится дважды при debug=True.
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
+        import threading
+
         t = threading.Thread(target=run_bot, daemon=True)
         t.start()
-    except Exception as e:
-        print(f"Ошибка запуска бота: {e}")
+        print("--- [BOT] Поток бота запущен успешно ---")
 
     # 2. Жестко ставим порт 80
     # На Amvera это самый стабильный вариант для избавления от 503/502
