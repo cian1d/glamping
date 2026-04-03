@@ -145,7 +145,7 @@ def get_db_connection():
 
     # 2. Выбираем путь в зависимости от среды (Amvera или локально)
     if os.path.exists('/data'):
-        db_path = 'glamping.db'
+        db_path = 'data/glamping.db'
     else:
         # Локально: берем папку проекта и соединяем с именем файла
         db_path = os.path.join(basedir, 'glamping.db')
