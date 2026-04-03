@@ -35,7 +35,7 @@ def access_denied(message):
 def get_db_connection():
     # Проверяем, запущены ли мы на сервере Amvera (там есть папка /data)
     if os.path.exists('/data'):
-        db_path = 'data/glamping.db'
+        db_path = '/data/glamping.db'
     else:
         db_path = 'glamping.db'  # Оставляем так для локальной разработки
     print(db_path)
