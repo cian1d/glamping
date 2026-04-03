@@ -76,8 +76,12 @@ def thanks():
 
 @app.route('/yookassa_webhook', methods=['POST'])
 def yookassa_webhook():
+    # Эту строчку ты увидишь в логах, если ЮKassa прислала хоть что-то
+    print("--- [DEBUG] Получен запрос на Webhook от ЮKassa ---")
     # ЮKassa присылает данные в формате JSON
     event_json = request.json
+
+    print(f"--- [DEBUG] Данные события: {event_json} ---")
 
     # Проверяем, что событие — это успешная оплата
     if event_json.get('event') == 'payment.succeeded':
@@ -90,6 +94,8 @@ def yookassa_webhook():
             client_name = meta.get('name')
             client_phone = meta.get('phone')
             dates = meta.get('dates')
+            check_in, check_out = map(str, dates.strip().split('-'))
+            services = meta.get('services')
             # Сумма, которая реально пришла
             amount = payment_object.get('amount', {}).get('value')
 
@@ -101,26 +107,30 @@ def yookassa_webhook():
                 # 1. ЗАПИСЫВАЕМ В БАЗУ ДАННЫХ
                 conn = get_db_connection()
                 conn.execute('''
-                    INSERT INTO bookings (house_id, client_name, client_phone, check_in_out, total_price)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (house_id, client_name, client_phone, dates, amount))
+                    INSERT INTO bookings (house_id, client_name, client_phone, check_in, check_out, services, total_price)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (house_id, client_name, client_phone, check_in, check_out, services, amount))
                 conn.commit()
                 conn.close()
 
                 # 2. УВЕДОМЛЯЕМ ТЕБЯ В ТЕЛЕГРАМ
                 # Используем <code> для копирования номера в буфер
+                sstr = house_id
+                if (services != ''):
+                    sstr += services
                 msg = (
                     f"💰 <b>НОВАЯ ОПЛАТА!</b>\n\n"
-                    f"🏠 Дом №: {house_id}\n"
+                    f"🏠 Бронь на: Дом №{sstr}\n"
                     f"👤 Гость: {client_name}\n"
                     f"📞 Тел: <code>{client_phone}</code>\n"
                     f"📅 Даты: {dates}\n"
                     f"💵 Сумма: {amount} ₽"
                 )
                 notify_admin(msg)
+                print(f"--- [SUCCESS] Бронь для {meta.get('name')} сохранена ---")
 
             except Exception as e:
-                print(f"Ошибка при сохранении брони: {e}")
+                print(f"--- [ERROR] Ошибка при записи в БД: {e} ---")
 
     # Обязательно отвечаем ЮKassa 'OK' и кодом 200, иначе они будут слать уведомление снова и снова
     return 'OK', 200
