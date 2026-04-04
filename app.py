@@ -362,11 +362,11 @@ if __name__ == '__main__':
     init_db()
 
     # Запуск бота в отдельном потоке
-    import threading
-
-    t = threading.Thread(target=run_bot, daemon=True)
-    t.start()
-    print("--- [BOT] Поток бота запущен успешно ---")
+    # import threading
+    #
+    # t = threading.Thread(target=run_bot, daemon=True)
+    # t.start()
+    # print("--- [BOT] Поток бота запущен успешно ---")
 
     # Amvera сама назначит порт через переменную окружения PORT
     port = int(os.environ.get("PORT", 80))
