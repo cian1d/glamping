@@ -6,19 +6,9 @@ meta:
 build:
   requirementsPath: requirements.txt
   useCache: true
-  # Добавляем артефакты, чтобы сервер видел папки с HTML и CSS
-  artifacts:
-    - templates
-    - static
-    - app.py
-    - main.py
-    - bot.py
-    - .env
-    - glamping.db
-
 run:
-  # Явно указываем команду запуска через python
-  command: python app.py
+  scriptName: app.py
+  command: null
   persistenceMount: /data
-  containerPort: 80
-  servicePort: 80
+  containerPort: "80"
+  servicePort: "80"
