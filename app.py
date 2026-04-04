@@ -140,7 +140,7 @@ def yookassa_webhook():
 # Стало:
 def get_db_connection():
     if os.path.exists('/data'):
-        db_path = '/data/glamping.db'
+        db_path = 'data/glamping.db'
     else:
         db_path = 'data/glamping.db'
 
@@ -353,7 +353,7 @@ def ping():
 #     app.run(debug=True, port=8000)
 
 if __name__ == '__main__':
-    # init_db()
+    init_db()
 
     # Запуск бота в отдельном потоке
     import threading
