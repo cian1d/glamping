@@ -143,12 +143,7 @@ def get_db_connection():
     # 1. Определяем путь к папке, где лежит сам файл app.py
     basedir = os.path.abspath(os.path.dirname(__file__))
 
-    # 2. Выбираем путь в зависимости от среды (Amvera или локально)
-    if os.path.exists('/data'):
-        db_path = '/data/glamping.db'
-    else:
-        # Локально: берем папку проекта и соединяем с именем файла
-        db_path = os.path.join(basedir, 'glamping.db')
+    db_path = "data/glamping.db"
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -355,19 +350,19 @@ def ping():
     return "PONG", 200
 
 
-# if __name__ == '__main__':
-#     app.run(debug=True, port=8000)
-
 if __name__ == '__main__':
-    init_db()
+    app.run(debug=True, port=8000)
 
-    # Запуск бота в отдельном потоке
-    # import threading
-    #
-    # t = threading.Thread(target=run_bot, daemon=True)
-    # t.start()
-    # print("--- [BOT] Поток бота запущен успешно ---")
-
-    # Amvera сама назначит порт через переменную окружения PORT
-    port = int(os.environ.get("PORT", 80))
-    app.run(host='0.0.0.0', port=port)
+# if __name__ == '__main__':
+#     init_db()
+#
+#     # Запуск бота в отдельном потоке
+#     # import threading
+#     #
+#     # t = threading.Thread(target=run_bot, daemon=True)
+#     # t.start()
+#     # print("--- [BOT] Поток бота запущен успешно ---")
+#
+#     # Amvera сама назначит порт через переменную окружения PORT
+#     port = int(os.environ.get("PORT", 80))
+#     app.run(host='0.0.0.0', port=port)
