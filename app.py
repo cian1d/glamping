@@ -39,9 +39,16 @@ def create_payment():
     print(dates)
     total_price = request.form.get('total_price')  # То самое скрытое поле из JS
 
-    # Собираем услуги (чекбоксы name="selected_services")
-    selected_services = request.form.getlist('selected_services')
-    services_str = ", ".join(selected_services)
+    # Собираем услуги (чекбоксы name="selected_services") — сохраняем названия, не ID
+    selected_service_ids = request.form.getlist('selected_services')
+    if selected_service_ids:
+        conn = get_db_connection()
+        placeholders = ','.join(['?'] * len(selected_service_ids))
+        rows = conn.execute(f'SELECT name FROM services WHERE id IN ({placeholders})', selected_service_ids).fetchall()
+        conn.close()
+        services_str = ", ".join(r['name'] for r in rows)
+    else:
+        services_str = ""
 
     # Создаем объект платежа
     idempotency_key = str(uuid.uuid4())
@@ -94,7 +101,14 @@ def yookassa_webhook():
             client_name = meta.get('name')
             client_phone = meta.get('phone')
             dates = meta.get('dates')
-            check_in, check_out = map(str, dates.strip().split('to'))
+            if ' — ' in dates:
+                check_in, check_out = [d.strip() for d in dates.split(' — ')]
+                check_in = datetime.strptime(check_in, '%d.%m.%Y').strftime('%Y-%m-%d')
+                check_out = datetime.strptime(check_out, '%d.%m.%Y').strftime('%Y-%m-%d')
+            elif 'to' in dates:
+                check_in, check_out = [d.strip() for d in dates.split('to')]
+            else:
+                check_in = check_out = dates.strip()
             services = meta.get('services')
             # Сумма, которая реально пришла
             amount = payment_object.get('amount', {}).get('value')
