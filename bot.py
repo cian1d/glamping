@@ -37,10 +37,10 @@ def get_db_connection():
     if os.path.exists('/data'):
         db_path = '/data/glamping.db'
     else:
-        db_path = 'glamping.db'  # Оставляем так для локальной разработки
+        db_path = 'data/glamping.db'
     print(db_path)
 
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
 
