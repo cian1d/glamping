@@ -6,18 +6,9 @@ meta:
 build:
   requirementsPath: requirements.txt
   useCache: true
-  # КРИТИЧЕСКИЙ БЛОК: без этого Flask не увидит ваши HTML и CSS
-  artifacts:
-    - templates
-    - static
-    - app.py
-    - main.py
-    - bot.py
-    - .env
-    - glamping.db
 
 run:
-  # Меняем scriptName на явную команду запуска
+  # Мы убираем scriptName и используем только явную команду
   command: python app.py
   persistenceMount: /data
   containerPort: 80
