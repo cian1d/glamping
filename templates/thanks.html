@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Спасибо за бронирование — Глэмпинг ZD{% endblock %}
+
+{% block content %}
+<style>
+    .thanks-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        text-align: center;
+        padding: 80px 20px;
+    }
+
+    .thanks-icon {
+        font-size: 80px;
+        margin-bottom: 30px;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-12px); }
+    }
+
+    .thanks-title {
+        font-family: var(--font-header);
+        font-size: 3rem;
+        color: var(--text-main);
+        margin: 0 0 20px 0;
+    }
+
+    .thanks-text {
+        font-size: 1.2rem;
+        color: #666;
+        max-width: 500px;
+        line-height: 1.7;
+        margin: 0 0 40px 0;
+    }
+
+    .btn-home {
+        display: inline-block;
+        padding: 16px 45px;
+        background-color: var(--accent-wood);
+        color: white;
+        text-decoration: none;
+        border-radius: 50px;
+        font-weight: bold;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 25px rgba(198, 156, 109, 0.35);
+    }
+
+    .btn-home:hover {
+        background-color: #b58b5d;
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(198, 156, 109, 0.45);
+    }
+
+    .divider-line {
+        width: 60px;
+        height: 3px;
+        background: var(--accent-wood);
+        border-radius: 2px;
+        margin: 0 auto 30px auto;
+    }
+</style>
+
+<section class="thanks-section">
+    <div class="thanks-icon">🌿</div>
+    <h1 class="thanks-title">Спасибо!</h1>
+    <div class="divider-line"></div>
+    <p class="thanks-text">Оплата прошла успешно. Мы свяжемся с вами в ближайшее время для подтверждения бронирования.</p>
+    <a href="/" class="btn-home">На главную</a>
+</section>
+{% endblock %}

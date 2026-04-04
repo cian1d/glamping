@@ -71,8 +71,7 @@ def create_payment():
 
 @app.route('/thanks')
 def thanks():
-    # Простая страница благодарности
-    return "<h1>Спасибо! Оплата прошла успешно. Мы свяжемся с вами!</h1>"
+    return render_template('thanks.html')
 
 
 @app.route('/yookassa_webhook', methods=['POST'])
