@@ -365,4 +365,5 @@ if __name__ == '__main__':
 
     # Amvera сама назначит порт через переменную окружения PORT
     port = int(os.environ.get("PORT", 80))
+    print(f"--- [SERVER] Запуск на порту {port} ---")
     app.run(host='0.0.0.0', port=port)
