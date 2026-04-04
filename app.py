@@ -157,7 +157,7 @@ def yookassa_webhook():
 # Стало:
 def get_db_connection():
     if os.path.exists('/data'):
-        db_path = 'data/glamping.db'
+        db_path = '/data/glamping.db'
     else:
         db_path = 'data/glamping.db'
 
