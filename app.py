@@ -131,7 +131,7 @@ def yookassa_webhook():
                 # Используем <code> для копирования номера в буфер
                 sstr = house_id
                 if (services != ''):
-                    sstr += services
+                    sstr += ' + ' + services
                 msg = (
                     f"💰 <b>НОВАЯ ОПЛАТА!</b>\n\n"
                     f"🏠 Бронь на: Дом №{sstr}\n"
@@ -366,17 +366,14 @@ def ping():
 # if __name__ == '__main__':
 #     app.run(debug=True, port=8000)
 
+# Запуск бота в отдельном потоке (работает и под gunicorn, и локально)
+import threading
+_bot_thread = threading.Thread(target=run_bot, daemon=True)
+_bot_thread.start()
+print("--- [BOT] Поток бота запущен ---")
+
 if __name__ == '__main__':
     init_db()
-
-    # Запуск бота в отдельном потоке
-    import threading
-
-    t = threading.Thread(target=run_bot, daemon=True)
-    t.start()
-    print("--- [BOT] Поток бота запущен успешно ---")
-
-    # Amvera сама назначит порт через переменную окружения PORT
     port = int(os.environ.get("PORT", 8080))
     print(f"--- [SERVER] Запуск на порту {port} ---")
     app.run(host='0.0.0.0', port=port)
