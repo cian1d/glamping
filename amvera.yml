@@ -7,7 +7,7 @@ build:
   requirementsPath: requirements.txt
   useCache: true
 run:
-  command: gunicorn --bind 0.0.0.0:80 app:app
+  command: gunicorn --workers 1 --bind 0.0.0.0:80 app:app
   persistenceMount: /data
   containerPort: "80"
   servicePort: "80"
