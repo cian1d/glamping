@@ -350,6 +350,10 @@ def services():
     conn.close()
     return render_template('services.html', services=services_data)
 
+@app.route('/ping')
+def ping():
+    return "PONG", 200
+
 
 # if __name__ == '__main__':
 #     app.run(debug=True, port=8000)
