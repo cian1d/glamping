@@ -41,7 +41,7 @@ def create_payment():
 
     # Собираем услуги (чекбоксы name="selected_services")
     selected_services = request.form.getlist('selected_services')
-    services_str = ", ".join(selected_services) if selected_services else "Нет"
+    services_str = ", ".join(selected_services)
 
     # Создаем объект платежа
     idempotency_key = str(uuid.uuid4())
@@ -139,10 +139,10 @@ def yookassa_webhook():
 # Было: sqlite3.connect('glamping.db')
 # Стало:
 def get_db_connection():
-    # 1. Определяем путь к папке, где лежит сам файл app.py
-    basedir = os.path.abspath(os.path.dirname(__file__))
-
-    db_path = "data/glamping.db"
+    if os.path.exists('/data'):
+        db_path = '/data/glamping.db'
+    else:
+        db_path = 'data/glamping.db'
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
