@@ -354,7 +354,7 @@ def ping():
 #     app.run(debug=True, port=8000)
 
 if __name__ == '__main__':
-    init_db()
+    # init_db()
 
     # Запуск бота в отдельном потоке
     # import threading
