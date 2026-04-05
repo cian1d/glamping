@@ -1,5 +1,7 @@
-import telebot
 from dotenv import load_dotenv
+load_dotenv()
+
+import telebot
 from flask import Flask, render_template, request, redirect
 import sqlite3
 from datetime import datetime
@@ -11,14 +13,13 @@ from main import init_db
 app = Flask(__name__)
 
 # Инициализируем БД при старте (создаёт таблицы и данные если их нет)
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"[DB] Ошибка инициализации БД: {e}")
 
-# Загружаем переменные из .env в окружение системы
-load_dotenv()
-
-# Читаем ID админа (или ник)
-chat_ids = os.getenv('ADMIN_NICKNAME')
-chat_ids = list(map(str, chat_ids.split(',')))
+# Читаем ID админа
+chat_ids = list(map(str, (os.getenv('ADMIN_NICKNAME') or '').split(',')))
 
 import uuid
 from yookassa import Configuration, Payment
