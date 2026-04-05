@@ -888,7 +888,7 @@ def add_booking_house_selected(call):
 
 def add_booking_get_name(message, house_id):
     name = message.text.strip()
-    msg = bot.send_message(message.chat.id, "Введите <b>телефон</b> гостя:", parse_mode='HTML')
+    msg = bot.send_message(message.chat.id, "Введите <b>телефон</b> гостя: +7...", parse_mode='HTML')
     bot.register_next_step_handler(msg, add_booking_get_phone, house_id, name)
 
 

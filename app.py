@@ -139,9 +139,9 @@ def yookassa_webhook():
                     f"💰 <b>НОВАЯ ОПЛАТА!</b>\n\n"
                     f"🏠 Бронь на: Дом №{sstr}\n"
                     f"👤 Гость: {client_name}\n"
-                    f"📞 Тел: <code>{client_phone}</code>\n"
+                    f"📞 Тел: <code>+7 {client_phone}</code>\n"
                     f"📅 Даты: {dates}\n"
-                    f"💵 Сумма: {amount} ₽"
+                    f"💵 Сумма: {int(amount)} ₽"
                 )
                 notify_admin(msg)
                 print(f"--- [SUCCESS] Бронь для {meta.get('name')} сохранена ---")
