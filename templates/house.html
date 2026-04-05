@@ -150,6 +150,84 @@
 {% endblock %}
 {% block scripts %}
 <script>
+    // ===== ГАЛЕРЕЯ =====
+    const track = document.getElementById('images-track');
+    const thumbs = document.querySelectorAll('.thumb');
+    let currentIndex = 0;
+    const totalSlides = track ? track.children.length : 0;
+
+    function slideTo(index, thumbEl) {
+        if (!track) return;
+        currentIndex = index;
+        track.style.transform = `translateX(-${index * 100}%)`;
+        thumbs.forEach(t => t.classList.remove('active'));
+        if (thumbEl) thumbEl.classList.add('active');
+        else if (thumbs[index]) thumbs[index].classList.add('active');
+    }
+
+    function moveSlide(dir) {
+        let next = currentIndex + dir;
+        if (next < 0) next = totalSlides - 1;
+        if (next >= totalSlides) next = 0;
+        slideTo(next, thumbs[next]);
+    }
+
+    // Клик по миниатюре — открываем полноэкранную галерею
+    thumbs.forEach((thumb, i) => {
+        thumb.addEventListener('click', function() {
+            slideTo(i, this);
+        });
+    });
+
+    // Двойной клик или клик по главному фото — открываем лайтбокс
+    if (track) {
+        track.querySelectorAll('img').forEach((img, i) => {
+            img.style.cursor = 'zoom-in';
+            img.addEventListener('click', function() {
+                openFullscreen(i);
+            });
+        });
+    }
+
+    // ===== ЛАЙТБОКС =====
+    const galleryModal = document.getElementById('galleryModal');
+    const fsImg = document.getElementById('fs-img');
+    const allSrcs = track ? Array.from(track.querySelectorAll('img')).map(img => img.src) : [];
+    let fsIndex = 0;
+
+    function openFullscreen(index) {
+        fsIndex = index;
+        fsImg.src = allSrcs[fsIndex];
+        galleryModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeFullscreen() {
+        galleryModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function changeFsImage(dir) {
+        fsIndex += dir;
+        if (fsIndex < 0) fsIndex = allSrcs.length - 1;
+        if (fsIndex >= allSrcs.length) fsIndex = 0;
+        fsImg.src = allSrcs[fsIndex];
+    }
+
+    // Закрытие по Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeFullscreen();
+        if (e.key === 'ArrowLeft') {
+            if (galleryModal.style.display === 'flex') changeFsImage(-1);
+            else moveSlide(-1);
+        }
+        if (e.key === 'ArrowRight') {
+            if (galleryModal.style.display === 'flex') changeFsImage(1);
+            else moveSlide(1);
+        }
+    });
+
+    // ===== ПОДСЧЁТ СУММЫ =====
     const calendarInput = document.getElementById('calendar-input');
     const display = document.getElementById('total-price-display');
     const hiddenTotalInput = document.getElementById('total_price_input');
@@ -166,40 +244,76 @@
 
         let servicesTotal = 0;
         checkboxes.forEach(cb => {
-            if (cb.checked) {
-                servicesTotal += parseInt(cb.getAttribute('data-price')) || 0;
-            }
+            if (cb.checked) servicesTotal += parseInt(cb.getAttribute('data-price')) || 0;
         });
 
         const effectiveNights = nights > 0 ? nights : 1;
         const total = (effectiveNights * pricePerNight) + servicesTotal;
 
-        // Обновляем текст на экране
-        display.innerText = total.toLocaleString('ru-RU') + " ₽";
         if (nights > 0) {
             display.innerHTML = `${total.toLocaleString('ru-RU')} ₽ <span style="font-size: 1rem; color: #888;">(за ${nights} ноч.)</span>`;
+        } else {
+            display.innerText = total.toLocaleString('ru-RU') + " ₽";
         }
 
-        // ПЕРЕДАЕМ СУММУ В СКРЫТОЕ ПОЛЕ ДЛЯ ЮKASSA
-        if (hiddenTotalInput) {
-            hiddenTotalInput.value = total;
-        }
+        if (hiddenTotalInput) hiddenTotalInput.value = total;
     }
 
-    // Инициализация календаря с привязкой к расчету
     flatpickr("#calendar-input", {
         mode: "range",
         minDate: "today",
         dateFormat: "d.m.Y",
-        onChange: function() {
-            calculateTotal();
-        }
+        locale: "ru",
+        onDayCreate: function(dObj, dStr, fp, dayElem) {
+            const bookedRanges = {{ booked_dates | tojson }};
+            const d = dayElem.dateObj;
+            // Обнуляем время для корректного сравнения
+            d.setHours(0, 0, 0, 0);
+
+            let isMorning = false;  // кто-то выезжает — левый верхний угол
+            let isEvening = false;  // кто-то заезжает — правый нижний угол
+            let isBlocked = false;  // день внутри брони — полностью заблокирован
+
+            bookedRanges.forEach(function(range) {
+                const checkIn = new Date(range.from);
+                const checkOut = new Date(range.to);
+                checkIn.setHours(0, 0, 0, 0);
+                checkOut.setHours(0, 0, 0, 0);
+
+                if (d.getTime() === checkIn.getTime()) isEvening = true;
+                if (d.getTime() === checkOut.getTime()) isMorning = true;
+                if (d > checkIn && d < checkOut) isBlocked = true;
+            });
+
+            if (isBlocked) {
+                dayElem.classList.add('disabled-range');
+                dayElem.setAttribute('aria-disabled', 'true');
+            }
+            if (isMorning) dayElem.classList.add('booked-morning');
+            if (isEvening) dayElem.classList.add('booked-evening');
+        },
+        disable: [
+            function(date) {
+                const bookedRanges = {{ booked_dates | tojson }};
+                date.setHours(0, 0, 0, 0);
+                return bookedRanges.some(function(range) {
+                    const checkIn = new Date(range.from);
+                    const checkOut = new Date(range.to);
+                    checkIn.setHours(0, 0, 0, 0);
+                    checkOut.setHours(0, 0, 0, 0);
+                    return date > checkIn && date < checkOut;
+                });
+            }
+        ],
+        onChange: function() { calculateTotal(); }
     });
 
-    // Слушаем клики по услугам
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', calculateTotal);
-    });
-</script>
+    checkboxes.forEach(cb => cb.addEventListener('change', calculateTotal));
+
+    // Маска телефона
+    const phoneInput = document.getElementById('phone-mask');
+    if (phoneInput) {
+        IMask(phoneInput, { mask: '(000) 000-00-00' });
+    }
 </script>
 {% endblock %}

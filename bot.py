@@ -712,6 +712,9 @@ def get_bookings_markup(page=0):
     if nav_buttons:
         markup.row(*nav_buttons)
 
+    # Кнопка добавления брони вручную
+    markup.add(types.InlineKeyboardButton("➕ Добавить бронь", callback_data="add_booking_start"))
+
     return text, markup
 
 # Изменяем декоратор, чтобы он ловил нажатие на конкретную бронь (например, "detail_5")
@@ -856,8 +859,99 @@ def callback_page(call):
         # Telegram выдаст ошибку, ее можно просто проигнорировать
         pass
 
+@bot.callback_query_handler(func=lambda call: call.data == "add_booking_start")
+def add_booking_start(call):
+    conn = get_db_connection()
+    houses = conn.execute('SELECT id, name FROM houses').fetchall()
+    conn.close()
+
+    markup = types.InlineKeyboardMarkup()
+    for h in houses:
+        markup.add(types.InlineKeyboardButton(h['name'], callback_data=f"add_book_house_{h['id']}"))
+    markup.add(types.InlineKeyboardButton("❌ Отмена", callback_data="page_0"))
+
+    bot.edit_message_text(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        text="<b>Выберите домик:</b>",
+        parse_mode='HTML',
+        reply_markup=markup
+    )
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("add_book_house_"))
+def add_booking_house_selected(call):
+    house_id = call.data.split('_')[3]
+    msg = bot.send_message(call.message.chat.id, "Введите <b>имя гостя</b>:", parse_mode='HTML')
+    bot.register_next_step_handler(msg, add_booking_get_name, house_id)
+
+
+def add_booking_get_name(message, house_id):
+    name = message.text.strip()
+    msg = bot.send_message(message.chat.id, "Введите <b>телефон</b> гостя:", parse_mode='HTML')
+    bot.register_next_step_handler(msg, add_booking_get_phone, house_id, name)
+
+
+def add_booking_get_phone(message, house_id, name):
+    phone = message.text.strip()
+    msg = bot.send_message(message.chat.id, "Введите <b>дату заезда</b> в формате ДД.ММ.ГГГГ:", parse_mode='HTML')
+    bot.register_next_step_handler(msg, add_booking_get_checkin, house_id, name, phone)
+
+
+def add_booking_get_checkin(message, house_id, name, phone):
+    try:
+        from datetime import datetime
+        check_in = datetime.strptime(message.text.strip(), '%d.%m.%Y').strftime('%Y-%m-%d')
+    except ValueError:
+        msg = bot.send_message(message.chat.id, "❌ Неверный формат. Введите дату заезда как ДД.ММ.ГГГГ:")
+        bot.register_next_step_handler(msg, add_booking_get_checkin, house_id, name, phone)
+        return
+    msg = bot.send_message(message.chat.id, "Введите <b>дату выезда</b> в формате ДД.ММ.ГГГГ:", parse_mode='HTML')
+    bot.register_next_step_handler(msg, add_booking_get_checkout, house_id, name, phone, check_in)
+
+
+def add_booking_get_checkout(message, house_id, name, phone, check_in):
+    try:
+        from datetime import datetime
+        check_out = datetime.strptime(message.text.strip(), '%d.%m.%Y').strftime('%Y-%m-%d')
+    except ValueError:
+        msg = bot.send_message(message.chat.id, "❌ Неверный формат. Введите дату выезда как ДД.ММ.ГГГГ:")
+        bot.register_next_step_handler(msg, add_booking_get_checkout, house_id, name, phone, check_in)
+        return
+    msg = bot.send_message(message.chat.id, "Введите <b>сумму</b> брони (только число):", parse_mode='HTML')
+    bot.register_next_step_handler(msg, add_booking_get_price, house_id, name, phone, check_in, check_out)
+
+
+def add_booking_get_price(message, house_id, name, phone, check_in, check_out):
+    if not message.text.strip().isdigit():
+        msg = bot.send_message(message.chat.id, "❌ Введите сумму цифрами:")
+        bot.register_next_step_handler(msg, add_booking_get_price, house_id, name, phone, check_in, check_out)
+        return
+    total_price = int(message.text.strip())
+
+    try:
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO bookings (house_id, client_name, client_phone, check_in, check_out, services, total_price)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (house_id, name, phone, check_in, check_out, '', total_price))
+        conn.commit()
+        conn.close()
+
+        bot.send_message(
+            message.chat.id,
+            f"✅ <b>Бронь добавлена!</b>\n\n"
+            f"👤 {name}\n📞 {phone}\n"
+            f"📅 {check_in} → {check_out}\n"
+            f"💰 {total_price} ₽",
+            parse_mode='HTML'
+        )
+        show_bookings(message)
+    except Exception as e:
+        bot.send_message(message.chat.id, f"❌ Ошибка при сохранении: {e}")
+
+
 def run_bot():
-    print("--- [LOG] Бот запускается в фоновом потоке ---")
     try:
         bot.infinity_polling(timeout=10, long_polling_timeout=5)
     except Exception as e:
