@@ -879,22 +879,40 @@ def add_booking_start(call):
     )
 
 
+def _cancel_markup():
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("❌ Отменить", callback_data="cancel_add_booking"))
+    return markup
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "cancel_add_booking")
+def cancel_add_booking(call):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    bot.edit_message_text(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        text="❌ Добавление брони отменено.",
+        reply_markup=None
+    )
+    show_bookings(call.message)
+
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith("add_book_house_"))
 def add_booking_house_selected(call):
     house_id = call.data.split('_')[3]
-    msg = bot.send_message(call.message.chat.id, "Введите <b>имя гостя</b>:", parse_mode='HTML')
+    msg = bot.send_message(call.message.chat.id, "Введите <b>имя гостя</b>:", parse_mode='HTML', reply_markup=_cancel_markup())
     bot.register_next_step_handler(msg, add_booking_get_name, house_id)
 
 
 def add_booking_get_name(message, house_id):
     name = message.text.strip()
-    msg = bot.send_message(message.chat.id, "Введите <b>телефон</b> гостя: +7...", parse_mode='HTML')
+    msg = bot.send_message(message.chat.id, "Введите <b>телефон</b> гостя:", parse_mode='HTML', reply_markup=_cancel_markup())
     bot.register_next_step_handler(msg, add_booking_get_phone, house_id, name)
 
 
 def add_booking_get_phone(message, house_id, name):
     phone = message.text.strip()
-    msg = bot.send_message(message.chat.id, "Введите <b>дату заезда</b> в формате ДД.ММ.ГГГГ:", parse_mode='HTML')
+    msg = bot.send_message(message.chat.id, "Введите <b>дату заезда</b> в формате ДД.ММ.ГГГГ:", parse_mode='HTML', reply_markup=_cancel_markup())
     bot.register_next_step_handler(msg, add_booking_get_checkin, house_id, name, phone)
 
 
@@ -903,10 +921,10 @@ def add_booking_get_checkin(message, house_id, name, phone):
         from datetime import datetime
         check_in = datetime.strptime(message.text.strip(), '%d.%m.%Y').strftime('%Y-%m-%d')
     except ValueError:
-        msg = bot.send_message(message.chat.id, "❌ Неверный формат. Введите дату заезда как ДД.ММ.ГГГГ:")
+        msg = bot.send_message(message.chat.id, "❌ Неверный формат. Введите дату заезда как ДД.ММ.ГГГГ:", reply_markup=_cancel_markup())
         bot.register_next_step_handler(msg, add_booking_get_checkin, house_id, name, phone)
         return
-    msg = bot.send_message(message.chat.id, "Введите <b>дату выезда</b> в формате ДД.ММ.ГГГГ:", parse_mode='HTML')
+    msg = bot.send_message(message.chat.id, "Введите <b>дату выезда</b> в формате ДД.ММ.ГГГГ:", parse_mode='HTML', reply_markup=_cancel_markup())
     bot.register_next_step_handler(msg, add_booking_get_checkout, house_id, name, phone, check_in)
 
 
@@ -915,16 +933,16 @@ def add_booking_get_checkout(message, house_id, name, phone, check_in):
         from datetime import datetime
         check_out = datetime.strptime(message.text.strip(), '%d.%m.%Y').strftime('%Y-%m-%d')
     except ValueError:
-        msg = bot.send_message(message.chat.id, "❌ Неверный формат. Введите дату выезда как ДД.ММ.ГГГГ:")
+        msg = bot.send_message(message.chat.id, "❌ Неверный формат. Введите дату выезда как ДД.ММ.ГГГГ:", reply_markup=_cancel_markup())
         bot.register_next_step_handler(msg, add_booking_get_checkout, house_id, name, phone, check_in)
         return
-    msg = bot.send_message(message.chat.id, "Введите <b>сумму</b> брони (только число):", parse_mode='HTML')
+    msg = bot.send_message(message.chat.id, "Введите <b>сумму</b> брони (только число):", parse_mode='HTML', reply_markup=_cancel_markup())
     bot.register_next_step_handler(msg, add_booking_get_price, house_id, name, phone, check_in, check_out)
 
 
 def add_booking_get_price(message, house_id, name, phone, check_in, check_out):
     if not message.text.strip().isdigit():
-        msg = bot.send_message(message.chat.id, "❌ Введите сумму цифрами:")
+        msg = bot.send_message(message.chat.id, "❌ Введите сумму цифрами:", reply_markup=_cancel_markup())
         bot.register_next_step_handler(msg, add_booking_get_price, house_id, name, phone, check_in, check_out)
         return
     total_price = int(message.text.strip())
