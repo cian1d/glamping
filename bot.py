@@ -32,8 +32,15 @@ def access_denied(message):
     bot.send_message(message.chat.id, "❌ Доступ запрещен. Вы не являетесь администратором.")
     print(f"[AUTH] Попытка доступа от ID: {message.from_user.id}")
 
+def fmt_date(d):
+    """Конвертирует YYYY-MM-DD в ДД.ММ.ГГГГ"""
+    try:
+        from datetime import datetime
+        return datetime.strptime(d, '%Y-%m-%d').strftime('%d.%m.%Y')
+    except Exception:
+        return d
+
 def get_db_connection():
-    # Проверяем, запущены ли мы на сервере Amvera (там есть папка /data)
     if os.path.exists('/data'):
         db_path = '/data/glamping.db'
     else:
@@ -691,7 +698,7 @@ def get_bookings_markup(page=0):
 
     for b in bookings:
         text += f"🆔 <b>Бронь №{b['id']}</b> — {b['house_name']}\n"
-        text += f"📅 {b['check_in']} - {b['check_out']}\n\n"
+        text += f"📅 {fmt_date(b['check_in'])} - {fmt_date(b['check_out'])}\n\n"
 
         # Создаем кнопку для каждой брони
         detail_buttons.append(types.InlineKeyboardButton(
@@ -766,8 +773,8 @@ def show_detail_booking(call, booking_id):
             f"<b>Общая цена:</b> {booking['total_price']} руб\n"
             f"👤 <b>Гость:</b> {booking['client_name']}\n"
             f"📞 <b>Телефон:</b> <code>+7 {booking['client_phone']}</code>\n"
-            f"📅 <b>Заезд:</b> {booking['check_in']}\n"
-            f"🚪 <b>Выезд:</b> {booking['check_out']}\n"
+            f"📅 <b>Заезд:</b> {fmt_date(booking['check_in'])}\n"
+            f"🚪 <b>Выезд:</b> {fmt_date(booking['check_out'])}\n"
         )
 
         markup = types.InlineKeyboardMarkup()
@@ -960,7 +967,7 @@ def add_booking_get_price(message, house_id, name, phone, check_in, check_out):
             message.chat.id,
             f"✅ <b>Бронь добавлена!</b>\n\n"
             f"👤 {name}\n📞 {phone}\n"
-            f"📅 {check_in} → {check_out}\n"
+            f"📅 {fmt_date(check_in)} → {fmt_date(check_out)}\n"
             f"💰 {total_price} ₽",
             parse_mode='HTML'
         )

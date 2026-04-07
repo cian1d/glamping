@@ -308,7 +308,21 @@
         onChange: function() { calculateTotal(); }
     });
 
-    checkboxes.forEach(cb => cb.addEventListener('change', calculateTotal));
+    // Валидация дат перед отправкой формы
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const dates = document.getElementById('calendar-input').value.trim();
+        if (!dates) {
+            e.preventDefault();
+            const input = document.getElementById('calendar-input');
+            input.style.border = '1.5px solid #e74c3c';
+            input.placeholder = 'Пожалуйста, выберите даты';
+            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    document.getElementById('calendar-input').addEventListener('change', function() {
+        this.style.border = '1px solid #eee';
+    });
 
     // Маска телефона
     const phoneInput = document.getElementById('phone-mask');
