@@ -559,6 +559,12 @@ def finalize_images_upload(m_group_id, chat_id, house_id):
             shutil.rmtree(target_dir)
         os.makedirs(target_dir)
 
+        # Удаляем старые фото и из static/img (актуально на сервере)
+        static_dir = os.path.join('static/img', f'houses/house{house_id}')
+        if static_dir != target_dir and os.path.exists(static_dir):
+            shutil.rmtree(static_dir)
+        os.makedirs(static_dir, exist_ok=True)
+
         print(f"[LOG] Сохраняю {len(photos)} фото в строгом порядке для дома {house_id}")
 
         for i, photo in enumerate(photos):
@@ -570,6 +576,10 @@ def finalize_images_upload(m_group_id, chat_id, house_id):
 
             with open(os.path.join(target_dir, filename), 'wb') as f:
                 f.write(downloaded_file)
+            # Дублируем в static/img чтобы сайт сразу видел новые фото
+            if static_dir != target_dir:
+                with open(os.path.join(static_dir, filename), 'wb') as f:
+                    f.write(downloaded_file)
             print(f"[LOG] Сохранен {filename} (msg_id: {photo['message_id']})")
 
         bot.send_message(chat_id, f"✅ Фотографии сохранены в правильном порядке! (Всего: {len(photos)})")
