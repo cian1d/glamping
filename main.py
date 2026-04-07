@@ -1,6 +1,11 @@
 import os
 import sqlite3
 
+def get_db_path():
+    if os.path.exists('/data'):
+        return '/data/glamping.db'
+    return 'data/glamping.db'
+
 def get_img_base():
     """Базовая папка для хранения загружаемых фото"""
     if os.path.exists('/data'):
@@ -9,15 +14,28 @@ def get_img_base():
 
 
 def sync_images():
-    """При старте копирует сохранённые фото из /data/img обратно в static/img"""
-    if not os.path.exists('/data/img'):
+    """
+    Синхронизация фото между static/img и /data/img.
+    - Если /data/img пустой — копируем исходники из static/img в /data/img
+    - Затем всегда копируем из /data/img в static/img (чтобы загруженные через бота фото были доступны сайту)
+    """
+    if not os.path.exists('/data'):
         return
+
     import shutil
-    src = '/data/img'
-    dst = 'static/img'
-    for root, dirs, files in os.walk(src):
-        rel = os.path.relpath(root, src)
-        target_dir = os.path.join(dst, rel)
+
+    data_img = '/data/img'
+    static_img = 'static/img'
+
+    # Первый запуск: /data/img пустой — копируем туда исходники из репозитория
+    if not os.path.exists(data_img) or not os.listdir(data_img):
+        print("[IMG] /data/img пустой, копируем исходники из static/img...")
+        shutil.copytree(static_img, data_img, dirs_exist_ok=True)
+
+    # Всегда синхронизируем из /data/img → static/img
+    for root, dirs, files in os.walk(data_img):
+        rel = os.path.relpath(root, data_img)
+        target_dir = os.path.join(static_img, rel)
         os.makedirs(target_dir, exist_ok=True)
         for f in files:
             shutil.copy2(os.path.join(root, f), os.path.join(target_dir, f))
