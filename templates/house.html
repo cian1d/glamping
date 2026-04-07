@@ -308,6 +308,8 @@
         onChange: function() { calculateTotal(); }
     });
 
+    checkboxes.forEach(cb => cb.addEventListener('change', calculateTotal));
+
     // Валидация дат перед отправкой формы
     document.querySelector('form').addEventListener('submit', function(e) {
         const dates = document.getElementById('calendar-input').value.trim();

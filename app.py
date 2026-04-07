@@ -58,7 +58,7 @@ def create_payment():
     idempotency_key = str(uuid.uuid4())
     payment = Payment.create({
         "amount": {
-            "value": f"{total_price}.00",
+            "value": f"{int(float(total_price))}.00",
             "currency": "RUB"
         },
         "confirmation": {
