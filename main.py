@@ -1,7 +1,27 @@
 import os
 import sqlite3
 
-def get_db_path():
+def get_img_base():
+    """Базовая папка для хранения загружаемых фото"""
+    if os.path.exists('/data'):
+        return '/data/img'
+    return 'static/img'
+
+
+def sync_images():
+    """При старте копирует сохранённые фото из /data/img обратно в static/img"""
+    if not os.path.exists('/data/img'):
+        return
+    import shutil
+    src = '/data/img'
+    dst = 'static/img'
+    for root, dirs, files in os.walk(src):
+        rel = os.path.relpath(root, src)
+        target_dir = os.path.join(dst, rel)
+        os.makedirs(target_dir, exist_ok=True)
+        for f in files:
+            shutil.copy2(os.path.join(root, f), os.path.join(target_dir, f))
+    print("[IMG] Фото синхронизированы из /data/img в static/img")
     if os.path.exists('/data'):
         return '/data/glamping.db'
     return 'data/glamping.db'

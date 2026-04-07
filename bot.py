@@ -32,8 +32,12 @@ def access_denied(message):
     bot.send_message(message.chat.id, "❌ Доступ запрещен. Вы не являетесь администратором.")
     print(f"[AUTH] Попытка доступа от ID: {message.from_user.id}")
 
+def get_img_base():
+    if os.path.exists('/data'):
+        return '/data/img'
+    return 'static/img'
+
 def fmt_date(d):
-    """Конвертирует YYYY-MM-DD в ДД.ММ.ГГГГ"""
     try:
         from datetime import datetime
         return datetime.strptime(d, '%Y-%m-%d').strftime('%d.%m.%Y')
@@ -179,7 +183,7 @@ def callback_service_detail(call):
     if service:
         # Формируем путь к картинке.
         # На сайте они лежат в static/img/services/, используем тот же путь для бота
-        image_path = os.path.join('static', 'img', 'services', service['image_filename'])
+        image_path = os.path.join(get_img_base(), 'services', service['image_filename'])
 
         caption = (
             f"✨ <b>{service['name']}</b>\n\n"
@@ -271,7 +275,7 @@ def callback_delete_service(call):
 
         # Удаляем физический файл картинки, если он есть
         if service['image_filename']:
-            path = os.path.join('static', 'img', 'services', service['image_filename'])
+            path = os.path.join(get_img_base(), 'services', service['image_filename'])
             if os.path.exists(path):
                 os.remove(path)
 
@@ -354,7 +358,7 @@ def show_house_details(call):
     # Метод .row() гарантирует, что кнопки будут стоять в одну линию
     markup.row(btn_edit, btn_back)
 
-    house_folder = f"static/img/houses/house{house_id}"
+    house_folder = os.path.join(get_img_base(), f'houses/house{house_id}')
     media = []
 
     try:
@@ -550,7 +554,7 @@ def finalize_images_upload(m_group_id, chat_id, house_id):
         if chat_id in user_upload_state:
             del user_upload_state[chat_id]
 
-        target_dir = f"static/img/houses/house{house_id}"
+        target_dir = os.path.join(get_img_base(), f'houses/house{house_id}')
         if os.path.exists(target_dir):
             shutil.rmtree(target_dir)
         os.makedirs(target_dir)
@@ -600,7 +604,7 @@ def delete_house_final(call):
         conn.close()
 
         # 2. Удаляем папку с фото
-        target_dir = f"static/img/houses/house{house_id}"
+        target_dir = os.path.join(get_img_base(), f'houses/house{house_id}')
         if os.path.exists(target_dir):
             shutil.rmtree(target_dir)
 
@@ -654,7 +658,7 @@ def process_add_short_desc(message, house_data):
         conn.close()
 
         # Создаем пустую папку для фото
-        os.makedirs(f"static/img/houses/house{new_id}", exist_ok=True)
+        os.makedirs(os.path.join(get_img_base(), f'houses/house{new_id}'), exist_ok=True)
 
         bot.send_message(message.chat.id, f"✅ Домик «{house_data['name']}» создан (ID: {new_id})!\n\n"
                                           f"Теперь выберите его в списке, чтобы добавить полное описание и фотографии.")

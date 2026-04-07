@@ -8,10 +8,11 @@ from datetime import datetime
 import requests
 import os
 from bot import bot, run_bot, notify_admin
-from main import init_db
+from main import init_db, sync_images
 
 app = Flask(__name__)
-# Инициализируем БД при старте (создаёт таблицы и данные если их нет)
+# Синхронизируем фото из /data/img в static/img и инициализируем БД
+sync_images()
 try:
     init_db()
 except Exception as e:
@@ -157,9 +158,17 @@ def yookassa_webhook():
 # Функция-помощник для связи с базой
 # Было: sqlite3.connect('glamping.db')
 # Стало:
-def get_db_connection():
+def get_img_base():
+    """Базовая папка для хранения загружаемых фото"""
     if os.path.exists('/data'):
-        db_path = '/data/glamping.db'
+        return '/data/img'
+    return 'static/img'
+
+def get_img_url(relative_path):
+    """Возвращает URL для отдачи картинки (для шаблонов)"""
+    if os.path.exists('/data'):
+        return '/uploads/' + relative_path
+    return '/static/img/' + relative_path
     else:
         db_path = 'data/glamping.db'
 
