@@ -19,8 +19,9 @@
 
     /* 2. Картинка занимает 100% на мобильных и 40% на десктопе */
     .wide-card-image {
-        flex: 1 1 300px; /* Базовая ширина 300px, может расти */
-        height: 250px;
+        flex: 1 1 300px;
+        min-height: 250px;
+        align-self: stretch;
         background-size: cover;
         background-position: center;
         position: relative;
@@ -44,7 +45,7 @@
     <div class="houses-list-vertical">
         {% for house in houses %}
         <a href="/house/{{ house['id'] }}" class="house-wide-card">
-            <div class="wide-card-image" style="background-image: url('{{ house['image_url'] }}');">
+            <div class="wide-card-image" style="background-image: url('/static/img/houses/house{{ house['id'] }}/cover.jpg');">
                 <div class="price-badge">от {{ house['price_per_night'] }}₽ / ночь</div>
             </div>
 

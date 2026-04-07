@@ -258,53 +258,65 @@
         if (hiddenTotalInput) hiddenTotalInput.value = total;
     }
 
+    const bookedRanges = {{ booked_dates | tojson }};
+
     flatpickr("#calendar-input", {
         mode: "range",
         minDate: "today",
         dateFormat: "d.m.Y",
         locale: "ru",
         onDayCreate: function(dObj, dStr, fp, dayElem) {
-            const bookedRanges = {{ booked_dates | tojson }};
-            const d = dayElem.dateObj;
-            // Обнуляем время для корректного сравнения
+            const d = new Date(dayElem.dateObj);
             d.setHours(0, 0, 0, 0);
 
-            let isMorning = false;  // кто-то выезжает — левый верхний угол
-            let isEvening = false;  // кто-то заезжает — правый нижний угол
-            let isBlocked = false;  // день внутри брони — полностью заблокирован
+            let isMorning = false;
+            let isEvening = false;
+            let isBlocked = false;
 
             bookedRanges.forEach(function(range) {
-                const checkIn = new Date(range.from);
-                const checkOut = new Date(range.to);
-                checkIn.setHours(0, 0, 0, 0);
-                checkOut.setHours(0, 0, 0, 0);
-
+                const checkIn = new Date(range.from); checkIn.setHours(0,0,0,0);
+                const checkOut = new Date(range.to);  checkOut.setHours(0,0,0,0);
                 if (d.getTime() === checkIn.getTime()) isEvening = true;
                 if (d.getTime() === checkOut.getTime()) isMorning = true;
                 if (d > checkIn && d < checkOut) isBlocked = true;
             });
 
-            if (isBlocked) {
-                dayElem.classList.add('disabled-range');
-                dayElem.setAttribute('aria-disabled', 'true');
-            }
+            if (isBlocked) { dayElem.classList.add('disabled-range'); dayElem.setAttribute('aria-disabled', 'true'); }
             if (isMorning) dayElem.classList.add('booked-morning');
             if (isEvening) dayElem.classList.add('booked-evening');
         },
         disable: [
             function(date) {
-                const bookedRanges = {{ booked_dates | tojson }};
-                date.setHours(0, 0, 0, 0);
+                const d = new Date(date); d.setHours(0,0,0,0);
                 return bookedRanges.some(function(range) {
-                    const checkIn = new Date(range.from);
-                    const checkOut = new Date(range.to);
-                    checkIn.setHours(0, 0, 0, 0);
-                    checkOut.setHours(0, 0, 0, 0);
-                    return date > checkIn && date < checkOut;
+                    const checkIn = new Date(range.from); checkIn.setHours(0,0,0,0);
+                    const checkOut = new Date(range.to);  checkOut.setHours(0,0,0,0);
+                    return d > checkIn && d < checkOut;
                 });
             }
         ],
-        onChange: function() { calculateTotal(); }
+        onChange: function(selectedDates, dateStr, fp) {
+            if (selectedDates.length === 2) {
+                const selStart = new Date(selectedDates[0]); selStart.setHours(0,0,0,0);
+                const selEnd   = new Date(selectedDates[1]); selEnd.setHours(0,0,0,0);
+
+                const hasConflict = bookedRanges.some(function(range) {
+                    const checkIn  = new Date(range.from); checkIn.setHours(0,0,0,0);
+                    const checkOut = new Date(range.to);   checkOut.setHours(0,0,0,0);
+                    // Диапазоны пересекаются если: начало выбора < конец брони И конец выбора > начало брони
+                    return selStart < checkOut && selEnd > checkIn;
+                });
+
+                if (hasConflict) {
+                    fp.clear();
+                    const input = document.getElementById('calendar-input');
+                    input.style.border = '1.5px solid #e74c3c';
+                    input.placeholder = 'Эти даты уже заняты, выберите другие';
+                    return;
+                }
+            }
+            calculateTotal();
+        }
     });
 
     checkboxes.forEach(cb => cb.addEventListener('change', calculateTotal));
