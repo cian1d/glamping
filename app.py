@@ -11,6 +11,7 @@ from bot import bot, run_bot, notify_admin
 from main import init_db, sync_images
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'glamping-secret-2026')
 # Синхронизируем фото из /data/img в static/img и инициализируем БД
 sync_images()
 try:
@@ -63,7 +64,7 @@ def create_payment():
         },
         "confirmation": {
             "type": "redirect",
-            "return_url": request.host_url + "thanks"  # Куда вернуть юзера
+            "return_url": request.host_url + "thanks"
         },
         "capture": True,
         "description": f"Бронь дома №{house_id} ({name})",
@@ -76,21 +77,27 @@ def create_payment():
         }
     }, idempotency_key)
 
-    # Вот тут происходит магия: редирект на страницу оплаты ЮKassa
+    from flask import session
+    session['payment_id'] = payment.id
+
     return redirect(payment.confirmation.confirmation_url)
 
 
 @app.route('/thanks')
 def thanks():
-    payment_id = request.args.get('payment_id')
+    from flask import session
+    payment_id = session.pop('payment_id', None)
     if payment_id:
         try:
             payment = Payment.find_one(payment_id)
             if payment.status != 'succeeded':
-                # Оплата не прошла или отменена — возвращаем на главную
                 return redirect('/')
         except Exception as e:
             print(f"[PAYMENT CHECK] Ошибка проверки платежа: {e}")
+            return redirect('/')
+    else:
+        # Нет payment_id в сессии — прямой заход на /thanks, редиректим
+        return redirect('/')
     return render_template('thanks.html')
 
 
