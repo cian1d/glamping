@@ -313,17 +313,31 @@
     // Валидация дат перед отправкой формы
     document.querySelector('form').addEventListener('submit', function(e) {
         const dates = document.getElementById('calendar-input').value.trim();
+        const phone = document.getElementById('phone-mask');
+
         if (!dates) {
             e.preventDefault();
             const input = document.getElementById('calendar-input');
             input.style.border = '1.5px solid #e74c3c';
             input.placeholder = 'Пожалуйста, выберите даты';
             input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        if (phone.value.replace(/\D/g, '').length < 10) {
+            e.preventDefault();
+            phone.style.border = '1.5px solid #e74c3c';
+            phone.focus();
+            return;
         }
     });
 
     document.getElementById('calendar-input').addEventListener('change', function() {
         this.style.border = '1px solid #eee';
+    });
+
+    document.getElementById('phone-mask').addEventListener('input', function() {
+        this.style.border = '';
     });
 
     // Маска телефона
