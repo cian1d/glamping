@@ -22,8 +22,9 @@
 
     /* Картинка: на десктопе часть ряда, на мобильном - во всю ширину */
     .wide-card-image {
-        flex: 1 1 280px; /* Сжимается до 280px, затем переносится */
-        height: 200px;
+        flex: 1 1 280px;
+        min-height: 200px;
+        align-self: stretch;
         background-size: cover;
         background-position: center;
         position: relative;

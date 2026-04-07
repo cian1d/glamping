@@ -52,9 +52,9 @@
             <div class="wide-card-content">
                 <h2 class="wide-card-title">{{ house['name'] }}</h2>
                 <div class="wide-card-features">
-                    <span>🌲 Лесной вид</span>
-                    <span>🔥 Камин</span>
-                    <span>📶 Wi-Fi</span>
+                    {% for feature in house['features'].split(',') %}
+                    <span>🌲 {{ feature.strip() }}</span>
+                    {% endfor %}
                 </div>
                 <p class="wide-card-description">{{ house['short_description'] }}</p>
                 <span class="wide-card-link">Узнать подробнее →</span>

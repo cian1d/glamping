@@ -181,9 +181,7 @@ def callback_service_detail(call):
     conn.close()
 
     if service:
-        # Формируем путь к картинке.
-        # На сайте они лежат в static/img/services/, используем тот же путь для бота
-        image_path = os.path.join(get_img_base(), 'services', service['image_filename'])
+        image_path = os.path.join(get_img_base(), 'services', service['image_filename']) if service['image_filename'] else None
 
         caption = (
             f"✨ <b>{service['name']}</b>\n\n"
@@ -198,7 +196,7 @@ def callback_service_detail(call):
         markup.add(btn_back, btn_edit)
 
         # Проверяем, существует ли файл, прежде чем отправлять
-        if os.path.exists(image_path):
+        if image_path and os.path.isfile(image_path):
             with open(image_path, 'rb') as photo:
                 bot.send_photo(
                     call.message.chat.id,
@@ -290,9 +288,10 @@ def callback_delete_service(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('edit_field_'))
 def callback_field_selected(call):
-    data = call.data.split('_')
-    service_id = int(data[2])
-    field = call.data[13:]
+    parts = call.data.split('_')
+    # edit_field_{service_id}_{field} — field может содержать '_' (image_filename)
+    service_id = int(parts[2])
+    field = '_'.join(parts[3:])  # всё после service_id
 
     edit_service_state[call.message.chat.id] = {'service_id': service_id, 'field': field}
 
@@ -300,7 +299,7 @@ def callback_field_selected(call):
         bot.send_message(call.message.chat.id, "Отправьте новое фото для услуги:")
     else:
         field_names = {'name': 'новое название', 'description': 'новое описание', 'price': 'новую цену'}
-        bot.send_message(call.message.chat.id, f"Введите {field_names[field]} для услуги:")
+        bot.send_message(call.message.chat.id, f"Введите {field_names.get(field, field)} для услуги:")
 
 
 
@@ -525,17 +524,51 @@ def handle_universal_upload(message):
     # --- СИТУАЦИЯ 2: ЗАГРУЗКА ДЛЯ УСЛУГ ---
     state = edit_service_state.get(chat_id)
     if state:
-        # Переносим сюда логику из функции handle_service_photo
         if message.content_type != 'photo':
             bot.send_message(chat_id, "Для услуг отправляйте обычное фото (не файл).")
             return
 
+        file_id = message.photo[-1].file_id
+        file_info = bot.get_file(file_id)
+        downloaded = bot.download_file(file_info.file_path)
+
         if state.get('step') == 'photo':
-            # Логика создания НОВОЙ услуги (твой код из handle_service_photo)
-            add_service_start(message, state)
+            # Создание новой услуги — сохраняем фото и пишем в БД
+            filename = f"serv_{message.message_id}.jpg"
+            for folder in [os.path.join(get_img_base(), 'services'), 'static/img/services']:
+                os.makedirs(folder, exist_ok=True)
+                with open(os.path.join(folder, filename), 'wb') as f:
+                    f.write(downloaded)
+
+            conn = get_db_connection()
+            conn.execute(
+                'INSERT INTO services (name, description, price, image_filename) VALUES (?, ?, ?, ?)',
+                (state['name'], state['description'], state['price'], filename)
+            )
+            conn.commit()
+            conn.close()
+
+            del edit_service_state[chat_id]
+            bot.send_message(chat_id, f"✅ Услуга «{state['name']}» добавлена!")
+            show_services(message)
+
         elif state.get('field') == 'image_filename':
-            # Логика обновления фото СУЩЕСТВУЮЩЕЙ услуги
-            callback_field_selected(message, state)
+            # Обновление фото существующей услуги
+            service_id = state['service_id']
+            filename = f"serv_{message.message_id}.jpg"
+            for folder in [os.path.join(get_img_base(), 'services'), 'static/img/services']:
+                os.makedirs(folder, exist_ok=True)
+                with open(os.path.join(folder, filename), 'wb') as f:
+                    f.write(downloaded)
+
+            conn = get_db_connection()
+            conn.execute('UPDATE services SET image_filename = ? WHERE id = ?', (filename, service_id))
+            conn.commit()
+            conn.close()
+
+            del edit_service_state[chat_id]
+            bot.send_message(chat_id, "✅ Фото услуги обновлено!")
+            show_services(message)
         return
 
     # Если мы ни в каком режиме
