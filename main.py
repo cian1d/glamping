@@ -16,8 +16,8 @@ def get_img_base():
 def sync_images():
     """
     Синхронизация фото между static/img и /data/img.
-    - Если /data/img пустой — копируем исходники из static/img в /data/img
-    - Затем всегда копируем из /data/img в static/img (чтобы загруженные через бота фото были доступны сайту)
+    - Копируем из static/img в /data/img файлы которых там нет (исходники из репозитория)
+    - Затем копируем из /data/img в static/img (фото загруженные через бота)
     """
     if not os.path.exists('/data'):
         return
@@ -27,19 +27,27 @@ def sync_images():
     data_img = '/data/img'
     static_img = 'static/img'
 
-    # Первый запуск: /data/img пустой — копируем туда исходники из репозитория
-    if not os.path.exists(data_img) or not os.listdir(data_img):
-        print("[IMG] /data/img пустой, копируем исходники из static/img...")
-        shutil.copytree(static_img, data_img, dirs_exist_ok=True)
+    os.makedirs(data_img, exist_ok=True)
 
-    # Всегда синхронизируем из /data/img → static/img
+    # Шаг 1: копируем из static/img → /data/img только недостающие файлы
+    for root, dirs, files in os.walk(static_img):
+        rel = os.path.relpath(root, static_img)
+        target_dir = os.path.join(data_img, rel)
+        os.makedirs(target_dir, exist_ok=True)
+        for f in files:
+            dst = os.path.join(target_dir, f)
+            if not os.path.exists(dst):
+                shutil.copy2(os.path.join(root, f), dst)
+
+    # Шаг 2: копируем из /data/img → static/img (подтягиваем загруженное через бота)
     for root, dirs, files in os.walk(data_img):
         rel = os.path.relpath(root, data_img)
         target_dir = os.path.join(static_img, rel)
         os.makedirs(target_dir, exist_ok=True)
         for f in files:
             shutil.copy2(os.path.join(root, f), os.path.join(target_dir, f))
-    print("[IMG] Фото синхронизированы из /data/img в static/img")
+
+    print("[IMG] Синхронизация завершена")
     if os.path.exists('/data'):
         return '/data/glamping.db'
     return 'data/glamping.db'
