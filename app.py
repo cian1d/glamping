@@ -11,7 +11,7 @@ from bot import bot, run_bot, notify_admin
 from main import init_db
 
 app = Flask(__name__)
-# Инициализируем БД при старте (создаёт таблицы и данные если их нет
+# Инициализируем БД при старте (создаёт таблицы и данные если их нет)
 try:
     init_db()
 except Exception as e:
