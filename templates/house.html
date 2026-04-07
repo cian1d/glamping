@@ -3,6 +3,18 @@
 {% block title %}{{ house['name'] }} — Глэмпинг ZD{% endblock %}
 
 {% block content %}
+<style>
+    #phone-mask:focus,
+    #phone-mask:active {
+        outline: none !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    #phone-wrapper:focus-within {
+        border-color: var(--accent-wood) !important;
+        outline: none !important;
+    }
+</style>
 <div class="container"
      style="display: flex; flex-direction: column; align-items: flex-start; margin-top: 30px; padding: 0 15px; box-sizing: border-box; width: 100%; overflow-x: hidden;">
 
