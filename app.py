@@ -129,25 +129,27 @@ def yookassa_webhook():
                 ''', (house_id, client_name, client_phone, check_in, check_out, services, amount))
                 conn.commit()
                 conn.close()
+                print(f"--- [SUCCESS] Бронь для {meta.get('name')} сохранена ---")
+            except Exception as e:
+                print(f"--- [ERROR] Ошибка при записи в БД: {e} ---")
 
-                # 2. УВЕДОМЛЯЕМ ТЕБЯ В ТЕЛЕГРАМ
-                # Используем <code> для копирования номера в буфер
-                sstr = house_id
-                if (services != ''):
+            # 2. УВЕДОМЛЯЕМ В ТЕЛЕГРАМ (отдельно, чтобы ошибка БД не блокировала уведомление и наоборот)
+            try:
+                sstr = f"Дом №{house_id}"
+                if services:
                     sstr += ' + ' + services
+                amount_display = int(float(amount))
                 msg = (
                     f"💰 <b>НОВАЯ ОПЛАТА!</b>\n\n"
-                    f"🏠 Бронь на: Дом №{sstr}\n"
+                    f"🏠 Бронь: {sstr}\n"
                     f"👤 Гость: {client_name}\n"
                     f"📞 Тел: <code>+7 {client_phone}</code>\n"
                     f"📅 Даты: {dates}\n"
-                    f"💵 Сумма: {int(amount)} ₽"
+                    f"💵 Сумма: {amount_display} ₽"
                 )
                 notify_admin(msg)
-                print(f"--- [SUCCESS] Бронь для {meta.get('name')} сохранена ---")
-
             except Exception as e:
-                print(f"--- [ERROR] Ошибка при записи в БД: {e} ---")
+                print(f"--- [ERROR] Ошибка при отправке уведомления: {e} ---")
 
     # Обязательно отвечаем ЮKassa 'OK' и кодом 200, иначе они будут слать уведомление снова и снова
     return 'OK', 200
