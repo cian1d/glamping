@@ -82,6 +82,15 @@ def create_payment():
 
 @app.route('/thanks')
 def thanks():
+    payment_id = request.args.get('payment_id')
+    if payment_id:
+        try:
+            payment = Payment.find_one(payment_id)
+            if payment.status != 'succeeded':
+                # Оплата не прошла или отменена — возвращаем на главную
+                return redirect('/')
+        except Exception as e:
+            print(f"[PAYMENT CHECK] Ошибка проверки платежа: {e}")
     return render_template('thanks.html')
 
 

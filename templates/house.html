@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ house['name'] }} — Уютная Хижина{% endblock %}
+{% block title %}{{ house['name'] }} — Глэмпинг ZD{% endblock %}
 
 {% block content %}
 <div class="container"
@@ -76,13 +76,12 @@
                 </div>
                 <div style="margin-bottom: 15px;">
                     <label>Телефон</label>
-                    <div style="display: flex; align-items: center; margin-top: 5px; border: 1px solid #eee; border-radius: 10px; background: #fafafa; overflow: hidden;">
+                    <div id="phone-wrapper" style="display: flex; align-items: center; margin-top: 5px; border: 1px solid #eee; border-radius: 10px; background: #fafafa; overflow: hidden; transition: border-color 0.2s;">
                         <span style="padding: 12px 0 12px 12px; color: #555; font-weight: bold; background: #fafafa; pointer-events: none;">+7</span>
                         <input type="tel" id="phone-mask" name="client_phone"
                                placeholder="(000) 000-00-00"
                                required
-                               minlength="15"
-                               style="flex: 1; border: none; padding: 12px 12px 12px 5px; background: transparent; outline: none;">
+                               style="flex: 1; border: none; padding: 12px 12px 12px 5px; background: transparent; outline: none; -webkit-appearance: none;">
                     </div>
                 </div>
                 <div style="margin-bottom: 20px;">
@@ -344,6 +343,9 @@
     const phoneInput = document.getElementById('phone-mask');
     if (phoneInput) {
         IMask(phoneInput, { mask: '(000) 000-00-00' });
+        const wrapper = document.getElementById('phone-wrapper');
+        phoneInput.addEventListener('focus', () => wrapper.style.borderColor = 'var(--accent-wood)');
+        phoneInput.addEventListener('blur', () => wrapper.style.borderColor = '#eee');
     }
 </script>
 {% endblock %}
