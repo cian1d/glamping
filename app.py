@@ -164,29 +164,15 @@ def get_img_base():
         return '/data/img'
     return 'static/img'
 
-def get_img_url(relative_path):
-    """Возвращает URL для отдачи картинки (для шаблонов)"""
+def get_db_connection():
     if os.path.exists('/data'):
-        return '/uploads/' + relative_path
-    return '/static/img/' + relative_path
+        db_path = '/data/glamping.db'
     else:
         db_path = 'data/glamping.db'
 
     conn = sqlite3.connect(db_path, check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
-
-@app.route('/seed_booking')
-def seed_booking():
-    conn = get_db_connection()
-    conn.execute('''
-        INSERT INTO bookings (house_id, client_name, client_phone, check_in, check_out, services, total_price)
-        VALUES (1, 'Тест Тестов', '9001234567', '2026-04-10', '2026-04-13', 'Баня', 21000)
-    ''')
-    conn.commit()
-    conn.close()
-    return "OK — бронь добавлена", 200
-
 
 @app.route('/privacy')
 def privacy():
