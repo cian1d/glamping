@@ -52,7 +52,7 @@
             <div class="wide-card-content">
                 <h2 class="wide-card-title">{{ house['name'] }}</h2>
                 <div class="wide-card-features">
-                    {% for feature in house['features'].split(',') %}
+                    {% for feature in house['features'].split(',')[:3] %}
                     <span>🌲 {{ feature.strip() }}</span>
                     {% endfor %}
                 </div>
