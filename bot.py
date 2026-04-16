@@ -391,7 +391,7 @@ def show_house_details(call):
 
     except Exception as e:
         print(f"Ошибка: {e}")
-        bot.send_message(call.message.chat.id, "Ошибка при загрузке данных домика.")
+        bot.send_message(call.message.chat.id, f"Ошибка при загрузке данных домика.\nОшибка: {e}")
 
     bot.answer_callback_query(call.id)
 
