@@ -375,17 +375,11 @@ def show_house_details(call):
             for i, img_name in enumerate(images[:10]):
                 photo_path = os.path.join(house_folder, img_name)
                 with open(photo_path, 'rb') as f:
-                    if i == 0:
-                        # Привязываем кнопки к первому сообщению с альбомом
-                        media.append(types.InputMediaPhoto(f.read(), caption=caption, parse_mode='HTML'))
-                    else:
-                        media.append(types.InputMediaPhoto(f.read()))
+                    media.append(types.InputMediaPhoto(f.read()))
 
         if media:
             bot.send_media_group(call.message.chat.id, media)
-            # Так как к media_group нельзя прикрепить клавиатуру,
-            # отправляем её отдельным сообщением сразу после альбома
-            bot.send_message(call.message.chat.id, "Выберите действие:", reply_markup=markup)
+            bot.send_message(call.message.chat.id, caption, parse_mode='HTML', reply_markup=markup)
         else:
             bot.send_message(call.message.chat.id, caption, parse_mode='HTML', reply_markup=markup)
 
