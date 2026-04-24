@@ -37,6 +37,26 @@ def get_img_base():
         return '/data/img'
     return 'static/img'
 
+def get_holidays_path():
+    if os.path.exists('/data'):
+        return '/data/holidays.json'
+    return 'data/holidays.json'
+
+def load_holidays():
+    import json
+    path = get_holidays_path()
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return json.load(f)
+    return []
+
+def save_holidays(holidays):
+    import json
+    path = get_holidays_path()
+    os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+    with open(path, 'w') as f:
+        json.dump(sorted(set(holidays)), f)
+
 def fmt_date(d):
     try:
         from datetime import datetime
@@ -61,9 +81,10 @@ def get_db_connection():
 def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton("📋 Все бронирования")
-    btn2 = types.KeyboardButton("🏠 Все домики")  # Новая кнопка
-    btn3 = types.KeyboardButton("✨ Все доп. услуги")  # Новая кнопка
-    markup.add(btn1, btn2, btn3)
+    btn2 = types.KeyboardButton("🏠 Все домики")
+    btn3 = types.KeyboardButton("✨ Все доп. услуги")
+    btn4 = types.KeyboardButton("🎉 Праздничные дни")
+    markup.add(btn1, btn2, btn3, btn4)
     bot.send_message(message.chat.id, "Привет! Я бот-администратор.", reply_markup=markup)
 
 
@@ -127,6 +148,8 @@ def handle_text(message):
         show_houses(message)
     elif message.text == "✨ Все доп. услуги":
         show_services(message)
+    elif message.text == "🎉 Праздничные дни":
+        show_holidays(message)
 
 
 def show_services(message):
@@ -1024,6 +1047,65 @@ def add_booking_get_price(message, house_id, name, phone, check_in, check_out):
         show_bookings(message)
     except Exception as e:
         bot.send_message(message.chat.id, f"❌ Ошибка при сохранении: {e}")
+
+
+def show_holidays(message):
+    holidays = load_holidays()
+    markup = types.InlineKeyboardMarkup()
+
+    if holidays:
+        text = "🎉 <b>Праздничные дни</b> (надбавка +2000 ₽):\n\n"
+        for d in sorted(holidays):
+            text += f"• {fmt_date(d)}\n"
+            markup.add(types.InlineKeyboardButton(f"🗑 {fmt_date(d)}", callback_data=f"del_holiday_{d}"))
+    else:
+        text = "🎉 <b>Праздничные дни</b>\n\nСписок пуст."
+
+    markup.add(types.InlineKeyboardButton("➕ Добавить дату", callback_data="add_holiday"))
+    bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "add_holiday")
+def add_holiday_start(call):
+    msg = bot.send_message(call.message.chat.id,
+                           "Введите дату праздника в формате <b>ДД.ММ.ГГГГ</b>:",
+                           parse_mode='HTML', reply_markup=_cancel_markup())
+    bot.register_next_step_handler(msg, add_holiday_save)
+
+
+def add_holiday_save(message):
+    try:
+        from datetime import datetime
+        date_iso = datetime.strptime(message.text.strip(), '%d.%m.%Y').strftime('%Y-%m-%d')
+    except ValueError:
+        msg = bot.send_message(message.chat.id, "❌ Неверный формат. Введите дату как ДД.ММ.ГГГГ:",
+                               reply_markup=_cancel_markup())
+        bot.register_next_step_handler(msg, add_holiday_save)
+        return
+
+    holidays = load_holidays()
+    if date_iso not in holidays:
+        holidays.append(date_iso)
+        save_holidays(holidays)
+        bot.send_message(message.chat.id, f"✅ Дата {fmt_date(date_iso)} добавлена как праздничная.")
+    else:
+        bot.send_message(message.chat.id, f"Дата {fmt_date(date_iso)} уже в списке.")
+    show_holidays(message)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("del_holiday_"))
+def del_holiday(call):
+    date_iso = call.data[len("del_holiday_"):]
+    holidays = load_holidays()
+    if date_iso in holidays:
+        holidays.remove(date_iso)
+        save_holidays(holidays)
+        bot.answer_callback_query(call.id, f"Удалено: {fmt_date(date_iso)}")
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except Exception:
+        pass
+    show_holidays(call.message)
 
 
 def run_bot():
