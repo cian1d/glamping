@@ -429,6 +429,13 @@ def services():
 def ping():
     return "PONG", 200
 
+@app.route('/debug_holidays')
+def debug_holidays():
+    path = get_holidays_path()
+    exists = os.path.exists(path)
+    data = load_holidays()
+    return f"path={path}, exists={exists}, data={data}", 200
+
 
 # if __name__ == '__main__':
 #     app.run(debug=True, port=8000)
