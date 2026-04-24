@@ -4,6 +4,7 @@ load_dotenv()
 import telebot
 from flask import Flask, render_template, request, redirect
 import sqlite3
+import json
 from datetime import datetime
 import requests
 import os
@@ -180,6 +181,24 @@ def get_img_base():
         return '/data/img'
     return 'static/img'
 
+def get_holidays_path():
+    if os.path.exists('/data'):
+        return '/data/holidays.json'
+    return 'data/holidays.json'
+
+def load_holidays():
+    path = get_holidays_path()
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return json.load(f)
+    return []
+
+def save_holidays(holidays):
+    path = get_holidays_path()
+    os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+    with open(path, 'w') as f:
+        json.dump(sorted(set(holidays)), f)
+
 def get_db_connection():
     if os.path.exists('/data'):
         db_path = '/data/glamping.db'
@@ -189,6 +208,24 @@ def get_db_connection():
     conn = sqlite3.connect(db_path, check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
+
+def get_holidays_path():
+    if os.path.exists('/data'):
+        return '/data/holidays.json'
+    return 'data/holidays.json'
+
+def load_holidays():
+    path = get_holidays_path()
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return json.load(f)
+    return []
+
+def save_holidays(holidays):
+    path = get_holidays_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as f:
+        json.dump(holidays, f)
 
 @app.route('/privacy')
 def privacy():
@@ -228,16 +265,18 @@ def house_page(house_id):
     additional_images = []
 
     if os.path.exists(folder_path):
-        # Читаем все файлы в папке
         files = os.listdir(folder_path)
-        # Берем только те, что начинаются на 'image' и являются картинками
-        additional_images = [f for f in files if f.startswith('image') and f.endswith(('.jpg', '.jpeg', '.png', '.JPG'))]
-        additional_images.sort()  # Чтобы порядок был 1, 2, 3...
+        # Берём только image*.jpg/jpeg/png, исключаем cover и мусор
+        additional_images = sorted([
+            f for f in files
+            if f.startswith('image') and f.lower().endswith(('.jpg', '.jpeg', '.png'))
+        ])
 
     return render_template('house.html',
                            house=house,
                            images=additional_images,
                            booked_dates=[dict(ix) for ix in booked_dates],
+                           holidays=load_holidays(),
                            all_services=all_services)
 
 def days_between(date1_str, date2_str):
