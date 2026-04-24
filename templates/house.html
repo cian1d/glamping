@@ -248,31 +248,6 @@
     const checkboxes = document.querySelectorAll('.service-checkbox');
     const pricePerNight = {{ house['price_per_night'] }};
 
-    function calculateTotal() {
-        let nights = 0;
-        if (calendarInput._flatpickr && calendarInput._flatpickr.selectedDates.length === 2) {
-            const start = calendarInput._flatpickr.selectedDates[0];
-            const end = calendarInput._flatpickr.selectedDates[1];
-            nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-        }
-
-        let servicesTotal = 0;
-        checkboxes.forEach(cb => {
-            if (cb.checked) servicesTotal += parseInt(cb.getAttribute('data-price')) || 0;
-        });
-
-        const effectiveNights = nights > 0 ? nights : 1;
-        const total = (effectiveNights * pricePerNight) + servicesTotal;
-
-        if (nights > 0) {
-            display.innerHTML = `${total.toLocaleString('ru-RU')} ₽ <span style="font-size: 1rem; color: #888;">(за ${nights} ноч.)</span>`;
-        } else {
-            display.innerText = total.toLocaleString('ru-RU') + " ₽";
-        }
-
-        if (hiddenTotalInput) hiddenTotalInput.value = total;
-    }
-
     const bookedRanges = {{ booked_dates | tojson }};
     const holidays = {{ holidays | tojson }};
     const WEEKEND_SURCHARGE = 2000;
