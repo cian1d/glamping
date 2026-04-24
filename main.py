@@ -40,6 +40,16 @@ def sync_images():
                 shutil.copy2(os.path.join(root, f), dst)
 
     # Шаг 2: копируем из /data/img → static/img (подтягиваем загруженное через бота)
+    # Сначала чистим папки с домиками в static чтобы не было мусора от старых загрузок
+    static_houses = os.path.join(static_img, 'houses')
+    data_houses = os.path.join(data_img, 'houses')
+    if os.path.exists(data_houses) and os.path.exists(static_houses):
+        for house_dir in os.listdir(data_houses):
+            static_house = os.path.join(static_houses, house_dir)
+            data_house = os.path.join(data_houses, house_dir)
+            if os.path.isdir(data_house) and os.path.exists(static_house):
+                shutil.rmtree(static_house)
+
     for root, dirs, files in os.walk(data_img):
         rel = os.path.relpath(root, data_img)
         target_dir = os.path.join(static_img, rel)
