@@ -249,7 +249,7 @@
     const pricePerNight = {{ house['price_per_night'] }};
 
     const bookedRanges = {{ booked_dates | tojson }};
-    const holidays = {{ holidays | tojson }};
+    const holidays = {{ holidays | tojson }} || [];
     const WEEKEND_SURCHARGE = 2000;
 
     function isSpecialDay(date) {
