@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+
 load_dotenv()
 
 import telebot
@@ -142,9 +143,9 @@ def yookassa_webhook():
                 # 1. ЗАПИСЫВАЕМ В БАЗУ ДАННЫХ
                 conn = get_db_connection()
                 conn.execute('''
-                    INSERT INTO bookings (house_id, client_name, client_phone, check_in, check_out, services, total_price)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (house_id, client_name, client_phone, check_in, check_out, services, amount))
+                            INSERT INTO bookings (house_id, client_name, client_phone, check_in, check_out, services, total_price)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                        ''', (house_id, client_name, client_phone, check_in, check_out, services, amount))
                 conn.commit()
                 conn.close()
                 print(f"--- [SUCCESS] Бронь для {meta.get('name')} сохранена ---")
@@ -172,6 +173,7 @@ def yookassa_webhook():
     # Обязательно отвечаем ЮKassa 'OK' и кодом 200, иначе они будут слать уведомление снова и снова
     return 'OK', 200
 
+
 # Функция-помощник для связи с базой
 # Было: sqlite3.connect('glamping.db')
 # Стало:
@@ -181,10 +183,12 @@ def get_img_base():
         return '/data/img'
     return 'static/img'
 
+
 def get_holidays_path():
     if os.path.exists('/data'):
         return '/data/holidays.json'
     return 'data/holidays.json'
+
 
 def load_holidays():
     path = get_holidays_path()
@@ -193,11 +197,30 @@ def load_holidays():
             return json.load(f)
     return []
 
+
 def save_holidays(holidays):
     path = get_holidays_path()
     os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
     with open(path, 'w') as f:
         json.dump(sorted(set(holidays)), f)
+
+
+def get_special_dates():
+    """Возвращает список дат с надбавкой: праздники + выходные на 6 месяцев вперёд"""
+
+
+from datetime import timedelta
+
+holidays = load_holidays()
+special = set(holidays)  # сначала праздники
+
+today = datetime.today()
+end = today + timedelta(days=180)
+cur = today
+while cur <= end:
+    if cur.weekday() >= 5:  # сб=5, вс=6
+        special.add(cur.strftime('%Y-%m-%d'))
+    cur += timedelta(days=1)
 
 def get_db_connection():
     if os.path.exists('/data'):
@@ -209,10 +232,12 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+
 def get_holidays_path():
     if os.path.exists('/data'):
         return '/data/holidays.json'
     return 'data/holidays.json'
+
 
 def load_holidays():
     path = get_holidays_path()
@@ -221,19 +246,23 @@ def load_holidays():
             return json.load(f)
     return []
 
+
 def save_holidays(holidays):
     path = get_holidays_path()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w') as f:
         json.dump(holidays, f)
 
+
 @app.route('/privacy')
 def privacy():
     return render_template('privacy.html')
 
+
 @app.route('/oferta')
 def oferta():
     return render_template('oferta.html')
+
 
 # Главная страница
 @app.route('/')
@@ -276,8 +305,9 @@ def house_page(house_id):
                            house=house,
                            images=additional_images,
                            booked_dates=[dict(ix) for ix in booked_dates],
-                           holidays=load_holidays(),
+                           holidays=get_special_dates(),
                            all_services=all_services)
+
 
 def days_between(date1_str, date2_str):
     # Превращаем строки в объекты даты
@@ -288,6 +318,7 @@ def days_between(date1_str, date2_str):
     # Вычитаем и берем модуль (abs), чтобы не важен был порядок дат
     delta = abs(d2 - d1)
     return delta.days
+
 
 @app.route('/book/<int:house_id>', methods=['POST'])
 def book_house(house_id):
@@ -332,11 +363,10 @@ def book_house(house_id):
         for s in services_data:
             total_price += s['price']
 
-
     conn.execute('''
-        INSERT INTO bookings (house_id, client_name, client_phone, check_in, check_out, services, total_price) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (house_id, name, phone, check_in, check_out, ",".join(selected_ids), total_price))
+                INSERT INTO bookings (house_id, client_name, client_phone, check_in, check_out, services, total_price) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (house_id, name, phone, check_in, check_out, ",".join(selected_ids), total_price))
 
     # Получаем название домика для Telegram, пока соединение открыто
     house = conn.execute('SELECT name FROM houses WHERE id = ?', (house_id,)).fetchone()
@@ -369,7 +399,6 @@ def book_house(house_id):
     except Exception as e:
         print(f"Бот не смог отправить уведомление: {e}")
 
-
     # 5. Возвращаем пользователя на страницу успеха или главную
     return "OK", 200
 
@@ -394,11 +423,11 @@ def booking_page():
             # Для каждого домика проверяем: есть ли хоть одна бронь, которая ПЕРЕСЕКАЕТСЯ с запросом
             # Логика та же, что при бронировании: (Заезд < Конец_поиска) И (Выезд > Начало_поиска)
             overlap = conn.execute('''
-                SELECT id FROM bookings 
-                WHERE house_id = ? 
-                AND check_in < ? 
-                AND check_out > ?
-            ''', (house['id'], end_str, start_str)).fetchone()
+                        SELECT id FROM bookings 
+                        WHERE house_id = ? 
+                        AND check_in < ? 
+                        AND check_out > ?
+                    ''', (house['id'], end_str, start_str)).fetchone()
 
             # Если пересечений (overlap) НЕТ, значит домик свободен — добавляем в список
             if not overlap:
@@ -418,6 +447,7 @@ def all_houses():
     conn.close()
     return render_template('all_houses.html', houses=houses)
 
+
 @app.route('/services')
 def services():
     conn = get_db_connection()
@@ -425,9 +455,11 @@ def services():
     conn.close()
     return render_template('services.html', services=services_data)
 
+
 @app.route('/ping')
 def ping():
     return "PONG", 200
+
 
 @app.route('/debug_holidays')
 def debug_holidays():
@@ -442,6 +474,7 @@ def debug_holidays():
 
 # Запуск бота в отдельном потоке (работает и под gunicorn, и локально)
 import threading
+
 _bot_thread = threading.Thread(target=run_bot, daemon=True)
 _bot_thread.start()
 print("--- [BOT] Поток бота запущен ---")
