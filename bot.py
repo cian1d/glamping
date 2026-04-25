@@ -1050,7 +1050,14 @@ def add_booking_get_price(message, house_id, name, phone, check_in, check_out):
 
 
 def show_holidays(message):
+    from datetime import date
+    today = date.today().strftime('%Y-%m-%d')
     holidays = load_holidays()
+    # Удаляем прошедшие даты
+    cleaned = [d for d in holidays if d >= today]
+    if len(cleaned) != len(holidays):
+        save_holidays(cleaned)
+        holidays = cleaned
     markup = types.InlineKeyboardMarkup()
 
     if holidays:
