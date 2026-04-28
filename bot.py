@@ -502,7 +502,6 @@ def save_value(message, column, house_id):
 import os
 import shutil
 
-
 @bot.callback_query_handler(func=lambda call: call.data.startswith('edit_images_'))
 def request_new_images(call):
     house_id = call.data.split('_')[2]
@@ -761,7 +760,10 @@ def get_bookings_markup(page=0):
     conn.close()
 
     if not bookings:
-        return "Бронирований пока нет.", None
+        text = "Бронирований пока нет."
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        markup.add(types.InlineKeyboardButton("➕ Добавить бронь", callback_data="add_booking_start"))
+        return text, markup
 
     text = f"📋 <b>Список броней (Стр. {page + 1}):</b>\n\n"
     markup = types.InlineKeyboardMarkup(row_width=3)  # Делаем кнопки по 3 в ряд
