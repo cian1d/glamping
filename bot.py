@@ -432,7 +432,7 @@ def choose_edit_field(call):
         ("Название", "name"),
         ("Короткое описание", "short_description"),
         ("Полное описание", "description"),
-        ("Особенности (features)", "features"),
+        ("Характеристики", "features"),
         ("Цена за ночь", "price_per_night")  # Было "price", стало "price_per_night"
     ]
 
