@@ -1,6 +1,21 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    @media (max-width: 600px) {
+        .search-form-fixed {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0 15px;
+        }
+        .calendar-input {
+            width: 100% !important;
+        }
+        .btn-search {
+            width: 100%;
+        }
+    }
+</style>
 <div class="booking-page-container">
 
     <div class="search-section-fixed">
