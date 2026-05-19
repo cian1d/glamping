@@ -1118,10 +1118,14 @@ def del_holiday(call):
 
 
 def run_bot():
-    try:
-        bot.infinity_polling(timeout=10, long_polling_timeout=5)
-    except Exception as e:
-        print(f"--- [LOG] Критическая ошибка бота: {e} ---")
+    import time
+    while True:
+        try:
+            print("--- [BOT] Запуск polling ---")
+            bot.infinity_polling(timeout=10, long_polling_timeout=5)
+        except Exception as e:
+            print(f"--- [BOT] Ошибка: {e} --- Перезапуск через 5 сек...")
+            time.sleep(5)
 
 # if __name__ == "__main__":
 #     print("Бот запущен...")
