@@ -197,7 +197,8 @@ def yookassa_webhook():
                     f"📅 Даты: {dates}\n"
                     f"💵 Сумма: {amount_display} ₽"
                 )
-                notify_admin(msg)
+                import threading
+                threading.Thread(target=notify_admin, args=(msg,), daemon=True).start()
             except Exception as e:
                 print(f"--- [ERROR] Уведомление: {e} ---")
 
