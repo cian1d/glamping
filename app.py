@@ -214,6 +214,9 @@ def privacy():
 def oferta():
     return render_template('oferta.html')
 
+@app.route('/personal_data')
+def personal_data():
+    return render_template('personal_data.html')
 
 @app.route('/')
 def index():
